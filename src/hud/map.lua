@@ -31,11 +31,12 @@ return {
             return
         end
 
-        local x=128-2-4
-        local y=10
-        local c={0,7,11}
-        for j=0,Map.screen_height do
-            for i=0,Map.screen_width do
+        local x=122
+        local y=11
+        local c={3,7,11}
+        rectfill(x-1,y-1,x+Map.screen_width,y+Map.screen_height,0)
+        for j=0,Map.screen_height-1 do
+            for i=0,Map.screen_width-1 do
                 if self.visited_current.x==i and self.visited_current.y==j then
                     pset(x+i,y+j,c[3])
                 elseif self.visited[j][i] then
