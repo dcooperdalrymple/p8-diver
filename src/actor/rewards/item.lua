@@ -1,8 +1,11 @@
-local function open()
+local function open(self)
     if self.name=="coin" then
         Player.coins+=1
     elseif self.name=="harpoon" then
         if Player.harpoon_count>=Player.harpoon_max then
+            if self.collided==false then
+                Screen:play_sfx(9)
+            end
             return
         end
         Player.harpoon_count+=1
@@ -10,6 +13,9 @@ local function open()
         Player.cord_length_max+=8
     elseif self.name=="life" then
         if Player.life>=Player.life_max then
+            if self.collided==false then
+                Screen:play_sfx(9)
+            end
             return
         end
         Player.life+=1
@@ -17,6 +23,7 @@ local function open()
         Player.speed+=0.25/8
     end
 
+    self:open_reward()
     self:animate()
 end
 

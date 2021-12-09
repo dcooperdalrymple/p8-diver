@@ -30,8 +30,7 @@ local function open(self)
     end
 
     -- Show reward and animate up
-    local a = Actors:create_reward(self.rf,self.x,self.y,2/8,4/8)
-    --a:init()
+    local a = Actors:create_reward(self.rf,self.x,self.y,-2/8,-1)
     a:animate()
 end
 

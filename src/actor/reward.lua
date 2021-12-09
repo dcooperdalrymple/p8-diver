@@ -17,15 +17,17 @@ local function update(self)
         return
     end
 
-    if self.open or not collide(Player,self) then
+    if self.activated or not collide(Player,self) then
+        self.collided=false
         return
     end
 
     self:open()
+    self.collided=true
 end
 
 local function open(self)
-    self.open=true
+    self.activated=true
     Screen:play_sfx(0)
 end
 
@@ -41,7 +43,7 @@ end
 
 local function animate(self,t)
     t = t or 2
-    self.open=true
+    self.activated=true
     self.animating=true
     self.dy=-0.01
     self.t=t
@@ -79,8 +81,9 @@ return {
             rf=-1,
             r="unknown",
 
-            open=false,
+            activated=false,
             animating=false,
+            collided=false,
 
             init=init,
             init_reward=init,

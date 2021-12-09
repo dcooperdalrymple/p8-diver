@@ -132,7 +132,7 @@ return {
             },
             activate=function (self)
                 for a in all(actors) do
-                    if a.class=="treasure" and a.name=="chest" and a.r=="unknown" and a.open==true then
+                    if a.class=="treasure" and a.name=="chest" and a.r=="unknown" and a.activated==true then
                         return true
                     end
                 end
@@ -147,7 +147,7 @@ return {
             },
             activate=function (self)
                 for a in all(actors) do
-                    if a.class=="treasure" and a.name=="chest" and a.r=="cord" and a.open==true then
+                    if a.class=="treasure" and a.name=="chest" and a.r=="cord" and a.activated==true then
                         return true
                     end
                 end
@@ -161,7 +161,7 @@ return {
             },
             activate=function (self)
                 for a in all(actors) do
-                    if a.class=="treasure" and a.name=="chest" and a.r=="key" and a.open==true then
+                    if a.class=="treasure" and a.name=="chest" and a.r=="key" and a.activated==true then
                         return true
                     end
                 end
