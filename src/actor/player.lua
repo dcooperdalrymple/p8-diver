@@ -34,7 +34,7 @@ end
 
 local function update(self)
     self:update_actor()
-    
+
     if State.paused==true or State.started==false then
         return
     end
@@ -143,7 +143,7 @@ end
 
 local function draw(self)
     if self.life_timer>0 and flr(self.life_timer/Config.tdelta/4)%2==0 then
-        pal(palbw)
+        pal(Graphics.palbw)
         self:draw_actor()
         Graphics.reset_pal()
     else

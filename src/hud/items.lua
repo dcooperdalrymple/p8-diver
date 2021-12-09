@@ -27,7 +27,7 @@ local function draw()
     local i=1
     for x=16-Player.life_max,15,1 do
     if Player.life<i then
-        pal(palbw)
+        pal(Graphics.palbw)
     end
         spr(46,x*8-(16-x),1,1,1)
         Graphics.reset_pal()

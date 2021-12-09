@@ -24,7 +24,7 @@ local function draw(self)
     if self.life>0 then
         self:draw_actor()
     else
-        pal(palbw)
+        pal(Graphics.palbw)
         self:draw_actor()
         Graphics.reset_pal()
     end
