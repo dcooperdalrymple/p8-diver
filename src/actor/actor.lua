@@ -1,5 +1,5 @@
 local function init(self)
-    printh("init "..self.class..":"..self.name)
+    
 end
 
 local function update(self)

@@ -35,7 +35,6 @@ end
 
 local function add_actor(self,a)
     local a = self:make_actor(a)
-    printh("added "..a.class..":"..a.name)
     add(self.actors,a)
     return a
 end
