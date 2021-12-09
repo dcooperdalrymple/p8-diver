@@ -53,7 +53,7 @@ local function load(self)
 end
 
 local function update(self)
-    --self:animate_wave()
+    self:animate_wave()
 end
 
 local function draw(self)
@@ -142,7 +142,6 @@ local function is_solid(self,x,y)
     return fget(self:mget(x,y),0) and not (Config.dev==true and fget(self:mget(x,y),6))
 end
 
---[[ -- over token limit :'(
 local function animate_wave(self)
     local f=3+flr(State.time*2)%4
 
@@ -165,11 +164,9 @@ local function animate_wave(self)
         end
     end
 end
-]]--
 
 return {
     hidden={
-        --[[ -- over token limit
         {
             x=1,
             y=10,
@@ -194,7 +191,6 @@ return {
             w=11,
             h=5,
         },
-        ]]--
     },
 
     screen_width=4,
@@ -213,5 +209,5 @@ return {
     mset=_mset,
     mclear=mclear,
     is_solid=is_solid,
-    --animate_wave=animate_wave,
+    animate_wave=animate_wave,
 }
