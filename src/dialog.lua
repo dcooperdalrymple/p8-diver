@@ -21,13 +21,13 @@ local function update(self)
             else
                 e.line+=1
             end
-            play_sfx(9)
+            Screen:play_sfx(9)
         end
     else
         State.paused=false
         for k,e in pairs(self.events) do
             if e.activated==false and e:activate() then
-                self.start(k)
+                self:start(k)
             end
         end
     end
@@ -40,7 +40,7 @@ local function start(self,k)
     self.events[k].completed=false
 
     if Config.dev==true then
-        printh("dialog opened: "..self.events[k].name,Config.log)
+        printh("dialog opened: "..self.events[k].name)
     end
 end
 
@@ -117,7 +117,7 @@ local function draw(self)
     end
     x=64+w/2-6-7-6*4
     y+=2
-    print("press 🅾️",x,y,5)
+    print("press \142",x,y,5)
 end
 
 return {
@@ -131,8 +131,8 @@ return {
                 "what do you do now?",
             },
             activate=function (self)
-                for a in all(actors) do
-                    if a.class=="treasure" and a.name=="chest" and a.r=="unknown" and a.activated==true then
+                for a in all(Actors.actors) do
+                    if a.class=="reward" and a.name=="chest" and a.r=="unknown" and a.activated==true then
                         return true
                     end
                 end
@@ -146,8 +146,8 @@ return {
                 "maybe i should delve deeper?",
             },
             activate=function (self)
-                for a in all(actors) do
-                    if a.class=="treasure" and a.name=="chest" and a.r=="cord" and a.activated==true then
+                for a in all(Actors.actors) do
+                    if a.class=="reward" and a.name=="chest" and a.r=="cord" and a.activated==true then
                         return true
                     end
                 end
@@ -160,8 +160,8 @@ return {
                 "a mysterious key!_there should be a door_around here that fits.",
             },
             activate=function (self)
-                for a in all(actors) do
-                    if a.class=="treasure" and a.name=="chest" and a.r=="key" and a.activated==true then
+                for a in all(Actors.actors) do
+                    if a.class=="reward" and a.name=="chest" and a.r=="key" and a.activated==true then
                         return true
                     end
                 end
