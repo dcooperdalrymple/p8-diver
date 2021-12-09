@@ -46,6 +46,7 @@ function restart()
     State:reset()
 
     Sound:init()
+    Screen:init()
     Actors:init()
     Camera:init()
     Map:init()
@@ -53,6 +54,9 @@ function restart()
 
     Map:load()
     Actors:load() -- must be run after Map:load() for actors to be created
+
+    Screen:update()
+    Camera:set_screen_position(Player.start_pos)
 end
 
 function _update()

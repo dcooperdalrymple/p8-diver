@@ -29,7 +29,10 @@ local function set_position(self,p)
 end
 
 local function set_screen_position(self,p)
-    self:set_position(Screen.get_position(p))
+    p=Screen.get_position(p)
+    p.x*=8
+    p.y*=8
+    self:set_position(p)
 end
 
 return {
