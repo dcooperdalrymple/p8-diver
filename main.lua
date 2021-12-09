@@ -93,7 +93,7 @@ function _draw()
     elseif Screen.current_index<16 then
         c=1
     end
-    Path:draw(cord,c)
+    Path:draw(Player.cord,c)
 
     Actors:draw()
 
@@ -110,8 +110,8 @@ function _draw()
     -- return timer arc
     if Player.return_timer>0 then
         local a=Player.return_timer/Player.return_timer_max
-        arc(Player.x*8-Camera.x,Player.y*8-Camera.y,10,a,3,0.25)
-        arc(Player.x*8-Camera.x,Player.y*8-Camera.y,14,a,11,0.25)
+        Graphics.arc(Player.x*8-Camera.x,Player.y*8-Camera.y,10,a,3,0.25)
+        Graphics.arc(Player.x*8-Camera.x,Player.y*8-Camera.y,14,a,11,0.25)
     end
 
     Fade:draw()
