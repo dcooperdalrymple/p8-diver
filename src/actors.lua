@@ -34,7 +34,7 @@ local function make_actor(self,a)
 end
 
 local function add_actor(self,a)
-    local a = self:make_actor(a)
+    a = self:make_actor(a)
     add(self.actors,a)
     return a
 end
@@ -61,11 +61,12 @@ end
 
 -- actor create functions
 
-local function create_actor(self,f,x,y,dx,dy,a)
-    local a = a or {}
-    local dx = dx or 0
-    local dy = dy or 0
-    Map:mclear(x,y,a.w,a.h)
+local function create_actor(self,f,x,y,dx,dy,a,m)
+    a = self:add_actor(a or {})
+    dx = dx or 0
+    dy = dy or 0
+    m = m or 0
+    Map:mclear(x,y,ceil(a.w),ceil(a.h),m)
     a.x=x+dx
     a.y=y+dy
     if a.center then
@@ -75,7 +76,7 @@ local function create_actor(self,f,x,y,dx,dy,a)
     a._x=a.x
     a._y=a.y
     a.f=f
-    return self:add_actor(a)
+    return a
 end
 
 local function create_reward(self,f,x,y,dx,dy,a)
@@ -133,7 +134,7 @@ local function create_boat(self,f,x,y)
     if Boat!=false then
         return
     end
-    Boat = self:create_actor(f,x,y,0,1.25,ActorBoat.get())
+    Boat = self:create_actor(f,x,y,0,1.25,ActorBoat.get(),2)
 end
 
 local function create_player(self,f,x,y)
