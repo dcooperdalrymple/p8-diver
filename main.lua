@@ -33,10 +33,6 @@ ItemsHud = require("src/hud/items")
 function _init()
     restart()
 
-    if Config.dev==true then
-        printh("diver debug log",Config.log,true)
-    end
-
     Fade:init()
 
     menuitem(1,"restart",restart)

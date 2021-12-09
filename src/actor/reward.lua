@@ -1,9 +1,5 @@
 local function init(self)
     self:init_actor()
-
-    if Config.dev==true then
-        printh("treasure frame: "..self.f,Config.log)
-    end
 end
 
 local function update(self)

@@ -1,9 +1,5 @@
 local function init(self)
     self:init_actor()
-    if Config.dev==true then
-        printh("chest reward frame: "..self.rf,Config.log)
-        printh("chest reward type: "..self.r,Config.log)
-    end
 end
 
 local function open(self)
@@ -12,7 +8,7 @@ local function open(self)
     self.f=57 -- open sprite
 
     if Config.dev==true then
-        printh("chest opened: "..self.r,Config.log)
+        printh("chest opened: "..self.r)
     end
 
     if self.r=="coin" then
