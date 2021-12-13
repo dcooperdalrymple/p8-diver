@@ -25,6 +25,7 @@ end
 local function open(self)
     self.activated=true
     Screen:play_sfx(0)
+    Dialog:check({self.class,self.name,self.r})
 end
 
 local function draw(self)
@@ -62,6 +63,8 @@ local function set_reward(self,f)
         self.r="bomb"
     elseif self.rf==85 then -- flag for key?
         self.r="key"
+    elseif self.rf==77 then
+        self.r="dagger"
     else
         self.r="unknown"
     end

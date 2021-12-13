@@ -6,7 +6,7 @@ local function update(self)
     end
 
     -- bob vertically
-    self.y=self._y+sin(State.time/4+self.seed)*2+0.5/8
+    self.y=self._y+sin(State.time/4+self.seed)*2+0.0625
 end
 
 local function draw(self)
@@ -54,7 +54,7 @@ return {
             w=2,
             h=2,
             f=59,
-            seed=rnd(3.1415*2),
+            seed=rnd(6.283),
             update=update,
             update_squid=update,
             draw=draw,

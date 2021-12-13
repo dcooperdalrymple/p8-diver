@@ -12,21 +12,19 @@ local function open(self)
     end
 
     if self.r=="coin" then
-        Player.coins+=5
-    elseif self.r=="harpoon" then
-        Player.harpoon_max+=2
-        Player.harpoon_count+=2
+        Inventory:add_item("coin",5)
+    elseif self.r=="harpoon" or self.r=="bomb" then
+        Inventory:add_item(self.r,2,true)
     elseif self.r=="cord" then
-        Player.cord_length_max+=16
-    elseif self.r=="life" then
-        Player.life_max+=1
-        Player.life+=1
+        Inventory:add_item("cord",16,true)
+    elseif in_table(self.r,split("life,unknown,dagger,key")) then
+        Inventory:add_item(self.r,1,true)
     elseif self.r=="speed" then
-        Player.speed+=0.5/8
+        Player.speed+=0.0625
     end
 
     -- Show reward and animate up
-    local a = Actors:create_reward(self.rf,self.x,self.y,-2/8,-1)
+    local a = Actors:create_reward(self.rf,self.x,self.y,nil,-0.25,-1)
     a:animate()
 end
 

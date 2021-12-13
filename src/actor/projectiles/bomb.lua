@@ -6,16 +6,16 @@ end
 return {
     get=function ()
         return {
-            name="harpoon",
-            w=2,
-            h=0.625,
-            f=48,
-            dx=0.25,
-            dy=0.01,
-            dmg=1,
+            name="bomb",
+            w=0.875,
+            h=0.875,
+            f=40,
+            dx=0,
+            dy=0.125,
+            dmg=2,
 
             init = init,
-            init_harpoon = init
+            init_bomb = init
         }
     end
 }

@@ -22,7 +22,7 @@ return {
             w=2,
             h=1,
             f=23,
-            speed=1/8,
+            speed=0.125,
             dir=1, -- random?
             life=1,
             update=update,

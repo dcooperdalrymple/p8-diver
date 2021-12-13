@@ -1,6 +1,7 @@
 return {
     visited=false,
-    visited_current=false,
+    visited_current_x=false,
+    visited_current_y=false,
     update=function (self)
         if self.visited==false then
             self.visited={}
@@ -21,28 +22,28 @@ return {
         if self.visited[y][x]==false then
             self.visited[y][x]=true
         end
-        self.visited_current={
-            x=x,
-            y=y,
-        }
+        self.visited_current_x=x
+        self.visited_current_y=y
     end,
     draw=function (self)
-        if self.visited==false or self.visited_current==false then
+        if self.visited==false or self.visited_current_x==false then
             return
         end
 
         local x=122
         local y=11
-        local c={3,7,11}
+        local c_1=3
+        local c_2=7
+        local c_3=11
         rectfill(x-1,y-1,x+Map.screen_width,y+Map.screen_height,0)
         for j=0,Map.screen_height-1 do
             for i=0,Map.screen_width-1 do
-                if self.visited_current.x==i and self.visited_current.y==j then
-                    pset(x+i,y+j,c[3])
+                if self.visited_current_x==i and self.visited_current_y==j then
+                    pset(x+i,y+j,c_3)
                 elseif self.visited[j][i] then
-                    pset(x+i,y+j,c[2])
+                    pset(x+i,y+j,c_2)
                 else
-                    pset(x+i,y+j,c[1])
+                    pset(x+i,y+j,c_1)
                 end
             end
         end

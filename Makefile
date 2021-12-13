@@ -23,5 +23,8 @@ stats:
 test:
 	pico8 -run $(NAME).p8
 
+assets:
+	pico8 assets.p8
+
 clean:
 	rm $(NAME).p8 || true

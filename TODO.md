@@ -8,16 +8,9 @@
 - boat shop
 - death animation
 - boss
-- bombs
 - breakable walls
-- gear ring/inventory
 - enviro suit/lava
-- door/key
 - diver drops into water after hitting start on load screen
-
-## In Progress
-
-- Reorganization of code with picotool
 
 ## Completed
 
@@ -32,3 +25,7 @@
 - dialogue
 - hidden areas (fillp cover)
 - fix map position drawing of x=0,y=4
+- bombs
+- Reorganization of code with picotool
+- gear ring/inventory
+- door/key

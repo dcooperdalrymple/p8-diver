@@ -6,8 +6,8 @@ local function update(self)
     end
 
     -- bob around
-    self.y=self._y+sin(State.time/4+self.seed)*1/8+0.5/8
-    self.x=self._x+cos(State.time/4+self.seed)*1/8+0.5/8
+    self.y=self._y+sin(State.time/4+self.seed)*0.125+0.0625
+    self.x=self._x+cos(State.time/4+self.seed)*0.125+0.0625
 end
 
 return {
@@ -17,7 +17,7 @@ return {
             w=1,
             h=1,
             f=39,
-            seed=rnd(3.1415*2),
+            seed=rnd(6.283),
             update=update,
             update_urchin=update,
             life=1,

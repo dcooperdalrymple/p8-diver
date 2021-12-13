@@ -1,35 +1,22 @@
 local function open(self)
+    local item=Inventory:get_item(self.name)
     if self.name=="coin" then
-        Player.coins+=1
-    elseif self.name=="harpoon" then
-        if Player.harpoon_count>=Player.harpoon_max then
+        Inventory:add_item("coin")
+    elseif self.name=="harpoon" or self.name=="life" or self.name=="bomb" then
+        if not Inventory:add_item(self.name) then
             if self.collided==false then
                 Screen:play_sfx(9)
             end
             return
         end
-        Player.harpoon_count+=1
     elseif self.name=="cord" then
-        Player.cord_length_max+=8
-    elseif self.name=="life" then
-        if Player.life>=Player.life_max then
-            if self.collided==false then
-                Screen:play_sfx(9)
-            end
-            return
-        end
-        Player.life+=1
+        Inventory:add_item("cord",8,true)
     elseif self.name=="speed" then
-        Player.speed+=0.25/8
+        Player.speed+=0.03125
     end
 
     self:open_reward()
     self:animate()
-end
-
-local function set_reward(self,f)
-    self:_set_reward(f)
-    self.name=self.r
 end
 
 return {
@@ -42,7 +29,10 @@ return {
             open=open,
             open_item=open,
 
-            set_reward=set_reward,
+            set_reward=function(self,f)
+                self:_set_reward(f)
+                self.name=self.r
+            end,
         }
     end
 }

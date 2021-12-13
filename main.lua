@@ -1,10 +1,6 @@
 -- diver
 -- by coopersnout
 
--- compilation/code layout reference: https://github.com/tupini07/pico-8-games/tree/main/marksman-p
-
---local utilities = require("src/utilities")
-
 Config = require("config")
 State = require("src/state")
 
@@ -26,16 +22,14 @@ Map = require("src/map")
 Clouds = require("src/graphics/clouds")
 Dialog = require("src/dialog")
 Screen = require("src/screen")
+Inventory = require("src/inventory")
 
 MapHud = require("src/hud/map")
-ItemsHud = require("src/hud/items")
 
 function _init()
     restart()
-
-    Fade:init()
-
     menuitem(1,"restart",restart)
+    Fade:init()
 end
 
 function restart()
@@ -48,15 +42,15 @@ function restart()
     Sound:init()
     Screen:init()
     Actors:init()
-    Camera:init()
     Map:init()
     Dialog:init()
+    Inventory:init()
 
     Map:load()
     Actors:load() -- must be run after Map:load() for actors to be created
 
     Screen:update()
-    Camera:set_screen_position(Player.start_pos)
+    Camera:set_screen_position(Player)
 end
 
 function _update()
@@ -68,6 +62,7 @@ function _update()
     MapHud:update()
     Clouds:update()
     Dialog:update()
+    Inventory:update()
     Fade:update()
 
     State:update()
@@ -75,6 +70,10 @@ function _update()
 end
 
 function _draw()
+    if State.paused==true then
+        pal(Graphics.palbw)
+    end
+
     Screen:draw_bg()
     Screen:update()
 
@@ -99,29 +98,22 @@ function _draw()
 
     Map:draw_hidden()
 
-    -- draw hidden fill over outside objects
-    --fillp(0b0101101001011010.1)
-    --Graphics.draw_around(Screen.current_position.x*8,Screen.current_position.y*8,16*8,16*8,0)
-    --fillp()
+    if State.paused==true then
+        Graphics.reset_pal(true)
+    end
 
     -- reset for hud
+    if State.started==true then
+        camera()
+        Inventory:draw()
+        MapHud:draw()
+    end
+
+    -- draw player over hud
+    Camera:draw()
+    Player:draw()
+
     camera()
-
-    -- return timer arc
-    if Player.return_timer>0 then
-        local a=Player.return_timer/Player.return_timer_max
-        Graphics.arc(Player.x*8-Camera.x,Player.y*8-Camera.y,10,a,3,0.25)
-        Graphics.arc(Player.x*8-Camera.x,Player.y*8-Camera.y,14,a,11,0.25)
-    end
-
     Fade:draw()
-
     Dialog:draw()
-
-    if State.started==false then
-        return
-    end
-
-    MapHud:draw()
-    ItemsHud:draw()
 end
