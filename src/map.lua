@@ -28,14 +28,16 @@ return {
 
     init=function(self)
         reload()
-        for k,i in pairs(self.hidden) do
-            i=split(i,"_",true)
-            self.hidden[k]={
-                x=i[1],
-                y=i[2],
-                w=i[3],
-                h=i[4]
-            }
+        if type(self.hidden[1])=="string" then
+            for k,i in pairs(self.hidden) do
+                i=split(i,"_",true)
+                self.hidden[k]={
+                    x=i[1],
+                    y=i[2],
+                    w=i[3],
+                    h=i[4]
+                }
+            end
         end
     end,
     load=function(self)
@@ -68,6 +70,10 @@ return {
         end
     end,
     update=function(self)
+        if State.paused==true then
+            return
+        end
+
         -- animate wave
         local f=3+flr(State.time*2)%4
 

@@ -17,13 +17,11 @@ local function update(self)
 
     -- check enemy collision
     for a in all(Actors.actors) do
-        if a.class=="enemy" then
-            if a.life>0 and collide(self,a) then
-                a:damage_enemy(self.dmg)
-                Actors:remove_actor(self)
-                Screen:play_sfx(2)
-                break
-            end
+        if a.class=="enemy" and a.life>0 and collide(self,a) then
+            a:damage_enemy(self.dmg)
+            Actors:remove_actor(self)
+            Screen:play_sfx(2)
+            break
         end
     end
 end

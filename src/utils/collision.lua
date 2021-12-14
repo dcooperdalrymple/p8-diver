@@ -20,3 +20,9 @@ function collide(a,b)
     local bb=get_bounds(b)
     return ab.x2>bb.x1 and ab.x1<bb.x2 and ab.y2>bb.y1 and ab.y1<bb.y2
 end
+
+function in_radius(a,b,r)
+    local dx=a.x-b.x
+    local dy=a.y-b.y
+    return dx*dx+dy*dy<=r*r
+end

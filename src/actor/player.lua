@@ -40,16 +40,16 @@ local function update(self)
     elseif btn(1) then
         self.flx=false
     end
-    if btn(0) and not Map:is_solid(self.x-self.w/2,self.y) then
+    if btn(0) and not Map:is_solid(self.x-1,self.y) then
         self.dx=-sp
     end
-    if btn(1) and not Map:is_solid(self.x+self.w/2,self.y) then
+    if btn(1) and not Map:is_solid(self.x+1,self.y) then
         self.dx=sp
     end
-    if btn(2) and not Map:is_solid(self.x,self.y-self.h/2) then
+    if btn(2) and not Map:is_solid(self.x,self.y-0.625) then
         self.dy=-sp
     end
-    if btn(3) and not Map:is_solid(self.x,self.y+self.h/2) then
+    if btn(3) and not Map:is_solid(self.x,self.y+0.625) then
         self.dy=sp
     end
 
@@ -83,14 +83,14 @@ local function update(self)
 
                 if item.name=="harpoon" then
                     a=Actors:create_harpoon(self.x,self.y)
-                    a.x-=self.w/2
+                    a.x-=1
                 else
                     a=Actors:create_bomb(self.x,self.y)
-                    a.y-=self.h/2
+                    a.y-=0.625
                     if self.flx then
-                        a.x-=self.w*0.8125
+                        a.x-=1.625
                     else
-                        a.x+=self.w*0.375
+                        a.x+=0.75
                     end
                 end
                 a.flx=self.flx
@@ -104,8 +104,6 @@ local function update(self)
             for y=self.y-1,self.y+1 do
                 for x=self.x-1,self.x+1 do
                     local m=Map:mget(x,y)
-                    local _y=flr(y)
-                    local _x=flr(x)
                     if m==107 or m==123 then
                         x-=1
                     elseif m==122 or m==123 then

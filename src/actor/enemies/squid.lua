@@ -22,9 +22,9 @@ local function draw(self)
             center=self.center,
             s=self.s,
             x=self.x,
-            y=self.y-self.h/4,
+            y=self.y-0.5,
             w=self.w,
-            h=self.h/2,
+            h=1,
             flx=self.flx,
             fly=self.fly,
             life=self.life
@@ -34,9 +34,9 @@ local function draw(self)
             center=self.center,
             s=self.s,
             x=self.x,
-            y=self.y+self.h/4,
+            y=self.y+0.5,
             w=self.w,
-            h=self.h/2,
+            h=1,
             flx=self.flx,
             fly=self.fly,
             life=self.life
