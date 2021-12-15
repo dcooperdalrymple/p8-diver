@@ -23,8 +23,12 @@ return {
 
     screen_width=4,
     screen_height=8,
-    width=4*16,
-    height=8*16,
+    width=64,
+    height=128,
+
+    visited=false,
+    visited_current_x=false,
+    visited_current_y=false,
 
     init=function(self)
         reload()
@@ -70,10 +74,6 @@ return {
         end
     end,
     update=function(self)
-        if State.paused==true then
-            return
-        end
-
         -- animate wave
         local f=3+flr(State.time*2)%4
 
@@ -95,6 +95,27 @@ return {
                 self:mset(x,y,f)
             end
         end
+
+        -- hud
+        if not self.visited then
+            self.visited={}
+            for j=0,self.screen_height do
+                self.visited[j]={}
+                for i=0,self.screen_width do
+                    self.visited[j][i]=false
+                end
+            end
+        end
+
+        if Screen.current_index!=false then
+            local x=Screen.current_index%self.screen_width
+            local y=flr(Screen.current_index/self.screen_width)
+            if not self.visited[y][x] then
+                self.visited[y][x]=true
+            end
+            self.visited_current_x=x
+            self.visited_current_y=y
+        end
     end,
     draw=function(self)
         -- draw map in actual location
@@ -109,10 +130,8 @@ return {
                 for y=area.y,area.y+area.h-1 do
                     for x=area.x,area.x+area.w-1 do
                         if not collide(Player,{x=x,y=y,w=1,h=1}) then
-                            if col==true then
-                                local dx=Player.x-(x+0.5)
-                                local dy=Player.y-(y+0.5)
-                                if dx*dx+dy*dy<=3*3 then
+                            if col then
+                                if dist2(Player.x-(x+0.5),Player.y-(y+0.5))<=9 then
                                     fillp(0b0101101001011010.11)
                                 else
                                     fillp()
@@ -123,6 +142,22 @@ return {
                     end
                 end
                 fillp()
+            end
+        end
+    end,
+    draw_hud=function(self)
+        if self.visited!=false and self.visited_current_x!=false then
+            rectfill(121,10,122+self.screen_width,11+self.screen_height,0)
+            for j=0,self.screen_height-1 do
+                for i=0,self.screen_width-1 do
+                    if self.visited_current_x==i and self.visited_current_y==j then
+                        pset(122+i,11+j,11)
+                    elseif self.visited[j][i] then
+                        pset(122+i,11+j,7)
+                    else
+                        pset(122+i,11+j,3)
+                    end
+                end
             end
         end
     end,
@@ -171,6 +206,6 @@ return {
         end
     end,
     is_solid=function(self,x,y)
-        return fget(self:mget(x,y),0) and not (Config.dev==true and fget(self:mget(x,y),6))
+        return fget(self:mget(x,y),0) and not (Config.dev and fget(self:mget(x,y),6))
     end
 }

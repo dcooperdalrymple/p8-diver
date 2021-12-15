@@ -1,9 +1,5 @@
 return {
     state="",
-    color=0,
-    index=0, _index=0,
-    ticks=1,
-    tick=1,
 
     _in=function (self,color,ticks)
         self:_init("in",color,ticks)

@@ -27,15 +27,13 @@ return {
         self.equipped_item=nil
         self.equipped_key=nil
 
-        if Config.dev==true then
+        if Config.dev then
             self:add_item("bomb",1,true)
             self:add_item("harpoon",1,true)
         end
     end,
     update=function(self)
-        if Dialog.active_key!=false or State.started==false then
-            return
-        end
+        if (Dialog.active_key!=false or Shop.open or Shop._open) return
 
         if btnp(5) then
             self.open=not self.open
@@ -120,13 +118,25 @@ return {
         end
         amount=amount or 1
         item.quantity+=amount
-        if max==true then
+        if max then
             if item.max<=0 and not in_table(item.name, split("life,cord,coin")) then
                 add(self.equipped_items, item)
             end
             item.max+=amount
         elseif item.name!="coin" and item.quantity>item.max then
             item.quantity=item.max
+            return false
+        end
+        return true
+    end,
+    remove_item=function(self,item,amount)
+        if type(item)=="string" then
+            item=self:get_item(item)
+        end
+        amount=amount or 1
+        item.quantity-=amount
+        if item.quantity<0 then
+            item.quantity=0
             return false
         end
         return true

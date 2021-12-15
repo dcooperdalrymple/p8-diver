@@ -1,7 +1,3 @@
-local function init(self)
-    self:init_actor()
-end
-
 local function update(self)
     self:update_actor()
 
@@ -84,8 +80,6 @@ return {
             animating=false,
             collided=false,
 
-            init=init,
-            init_reward=init,
             update=update,
             update_reward=update,
             draw=draw,

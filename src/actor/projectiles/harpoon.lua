@@ -1,8 +1,3 @@
-local function init(self)
-    self:init_projectile()
-    Screen:play_sfx(1,0.2)
-end
-
 return {
     get=function ()
         return {
@@ -14,8 +9,10 @@ return {
             dy=0.01,
             dmg=1,
 
-            init = init,
-            init_harpoon = init
+            init = function(self)
+                self:init_projectile()
+                Screen:play_sfx(1,0.2)
+            end
         }
     end
 }

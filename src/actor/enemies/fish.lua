@@ -1,9 +1,7 @@
 local function update(self)
     self:update_enemy()
 
-    if self.life<=0 then
-        return
-    end
+    if (self.life<=0) return
 
     -- move left to right
     self.dx=self.speed*self.dir
@@ -26,7 +24,7 @@ return {
             dir=1, -- random?
             life=1,
             update=update,
-            update_fish=update,
+            update_fish=update
         }
     end
 }

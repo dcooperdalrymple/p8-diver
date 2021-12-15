@@ -2,9 +2,7 @@ return {
     clouds={},
     clouds_max=16,
     update=function(self)
-        if Screen:get_index(Player)>=4 or State.paused==true then
-            return
-        end
+        if (Screen:get_index(Player)>=4) return
 
         for c in all(self.clouds) do
             c.x+=c.dx

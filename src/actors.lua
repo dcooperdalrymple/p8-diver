@@ -25,10 +25,6 @@ return {
         foreach(self.actors, function(obj) obj:init() end)
     end,
     update = function(self)
-        if State.paused==true then
-            return
-        end
-
         foreach(self.actors, function(obj) obj:update() end)
     end,
     draw = function(self)

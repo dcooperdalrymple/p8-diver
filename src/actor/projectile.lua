@@ -1,5 +1,4 @@
 local function init(self)
-    self:init_actor()
     if self.flx then
         a.dx*=-1
     end
@@ -18,7 +17,7 @@ local function update(self)
     -- check enemy collision
     for a in all(Actors.actors) do
         if a.class=="enemy" and a.life>0 and collide(self,a) then
-            a:damage_enemy(self.dmg)
+            a:damage(self.dmg)
             Actors:remove_actor(self)
             Screen:play_sfx(2)
             break

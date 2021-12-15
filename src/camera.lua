@@ -1,7 +1,6 @@
 return {
     x=0,
     y=0,
-    init=init,
     update=function(self)
         -- camera movement (tile by tile)
         if self.x!=Screen.current_position.x*8 then

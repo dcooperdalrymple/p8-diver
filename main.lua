@@ -4,9 +4,8 @@
 Config = require("config")
 State = require("src/state")
 
-require("src/utils/string")
-require("src/utils/collision")
-Path = require("src/utils/path")
+require("src/utils")
+Path = require("src/path")
 
 Graphics = require("src/graphics")
 require("src/graphics/text")
@@ -15,16 +14,14 @@ Fade = require("src/graphics/fade")
 Player = false
 Boat = false
 
-Sound = require("src/sound")
 Actors = require("src/actors")
 Camera = require("src/camera")
 Map = require("src/map")
-Clouds = require("src/graphics/clouds")
+--Clouds = require("src/graphics/clouds")
 Dialog = require("src/dialog")
 Screen = require("src/screen")
+Shop = require("src/shop")
 Inventory = require("src/inventory")
-
-MapHud = require("src/hud/map")
 
 function _init()
     restart()
@@ -39,11 +36,11 @@ function restart()
     Graphics.reset_pal()
     State:reset()
 
-    Sound:init()
     Screen:init()
     Actors:init()
     Map:init()
     Dialog:init()
+    Shop:init()
     Inventory:init()
 
     Map:load()
@@ -56,21 +53,25 @@ end
 function _update()
 --function _update60()
 
-    Sound:update()
-    Actors:update()
-    Map:update()
-    MapHud:update()
-    Clouds:update()
-    Dialog:update()
-    Inventory:update()
-    Fade:update()
+    if not State.paused then
+        Actors:update()
+        Map:update()
+        --Clouds:update()
+    end
 
+    Dialog:update()
+    if State.started then
+        Shop:update()
+        Inventory:update()
+    end
+
+    Fade:update()
     State:update()
 
 end
 
 function _draw()
-    if State.paused==true then
+    if State.paused then
         pal(Graphics.palbw)
     end
 
@@ -81,7 +82,7 @@ function _draw()
     Camera:draw()
 
     Map:draw()
-    Clouds:draw()
+    --Clouds:draw()
 
     -- draw everything else black
     Graphics.draw_around(Screen.current_position.x*8,Screen.current_position.y*8,16*8,16*8,0)
@@ -98,15 +99,15 @@ function _draw()
 
     Map:draw_hidden()
 
-    if State.paused==true then
+    if State.paused then
         Graphics.reset_pal(true)
     end
 
     -- reset for hud
-    if State.started==true then
+    if State.started then
         camera()
         Inventory:draw()
-        MapHud:draw()
+        Map:draw_hud()
     end
 
     -- draw player over hud
@@ -114,6 +115,7 @@ function _draw()
     Player:draw()
 
     camera()
+    Shop:draw()
     Fade:draw()
     Dialog:draw()
 end

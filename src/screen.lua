@@ -8,10 +8,17 @@ return {
         self.current_position=false
         self.current_sfx=-1
         self.current_music=-1
+        self.sfx_timer=0
     end,
     update=function(self)
         if not self.current_index or self:get_index(Player)!=self.current_index then
             self:change()
+        end
+        if self.sfx_timer>0 then
+            self.sfx_timer-=Config.tdelta
+            if self.sfx_timer<=0 then
+                Screen:sfx()
+            end
         end
     end,
     change=function(self)
@@ -69,7 +76,7 @@ return {
         local bgc=8
         local fgc=0
         local buc=0
-        if State.paused==true then
+        if State.paused then
             bgc=0
             fgc=5
             buc=6
@@ -85,10 +92,6 @@ return {
             bgc=0
             fgc=8
             buc=8
-        else
-            bgc=8
-            fgc=0
-            buc=0
         end
 
         cls(bgc)
@@ -128,6 +131,6 @@ return {
         l=l or 0.1
         self.current_sfx=-1
         sfx(n,3)
-        Sound.timer=l
+        self.sfx_timer=l
     end
 }

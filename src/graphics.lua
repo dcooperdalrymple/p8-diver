@@ -1,9 +1,7 @@
 return {
     palbw=split("0,5,5,5,5,6,7,6,6,7,7,6,6,6,7,0"),
     reset_pal=function(force)
-        if State.paused==true and force!=true then
-            return
-        end
+        if (State.paused and force!=true) return
         pal()
         palt(14, true)
         palt(0, false)

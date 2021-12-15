@@ -28,7 +28,7 @@ return {
             trigger=merge_table(trigger,"~")
         end
         for k,e in pairs(self.events) do
-            if e.activated==false and e.trigger==trigger then
+            if not e.activated and e.trigger==trigger then
                 self:start(k)
             end
         end
@@ -55,7 +55,7 @@ return {
         self.events[k].activated=true
         self.events[k].completed=false
 
-        if Config.dev==true then
+        if Config.dev then
             printh("dialog opened: "..self.events[k].name)
         end
     end,
@@ -63,8 +63,7 @@ return {
 
         -- start controls
         if Screen.current_index==Screen.start_index then
-
-            if State.started==false then
+            if not State.started then
                 local text="diver"
                 local s=4+sin(State.time/4)*2+0.5
                 local x=64-#text*2*s+s/2

@@ -1,7 +1,3 @@
-local function init(self)
-    
-end
-
 local function update(self)
     self.x+=self.dx
     self.y+=self.dy
@@ -20,13 +16,13 @@ local function draw(self)
     local _x=self.x*8
     local _y=self.y*8
     if self.s==1 then
-        if self.center==true then
+        if self.center then
             _x-=self.w*4
             _y-=self.h*4
         end
         spr(self.f,_x,_y,self.w,self.h,self.flx,self.fly)
     else
-        if self.center==true then
+        if self.center then
             _x-=self.w*self.s*4
             _y-=self.h*self.s*4
         end
@@ -51,8 +47,7 @@ return {
             flx=false,
             fly=false,
 
-            init=init,
-            init_actor=init,
+            init=function(self) end,
             update=update,
             update_actor=update,
             draw=draw,
@@ -61,7 +56,7 @@ return {
             a=false, -- list of frames
             as=1, -- animation speed (sec)
             at=State.time, -- animation timer
-            ai=1, -- animation index
+            ai=1 -- animation index
         }
     end
 }

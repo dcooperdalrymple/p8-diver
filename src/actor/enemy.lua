@@ -10,16 +10,6 @@ local function update(self)
     end
 end
 
-local function damage(self,dmg)
-    dmg=dmg or 1
-    self.life-=dmg
-    if self.life<=0 then
-        self.dy=0.02
-        self.dx=0
-        self.fly=true
-    end
-end
-
 local function draw(self)
     if self.life>0 then
         self:draw_actor()
@@ -37,8 +27,15 @@ return {
             life=1,
             update = update,
             update_enemy = update,
-            damage = damage,
-            damage_enemy = damage,
+            damage = function(self,dmg)
+                dmg=dmg or 1
+                self.life-=dmg
+                if self.life<=0 then
+                    self.dy=0.02
+                    self.dx=0
+                    self.fly=true
+                end
+            end,
             draw = draw,
             draw_enemy = draw,
         }

@@ -1,9 +1,7 @@
 local function update(self)
     self:update_enemy()
 
-    if self.life<=0 then
-        return
-    end
+    if (self.life<=0) return
 
     -- bob vertically
     self.y=self._y+sin(State.time/4+self.seed)*2+0.0625
@@ -59,7 +57,7 @@ return {
             update_squid=update,
             draw=draw,
             draw_squid=draw,
-            life=2,
+            life=2
         }
     end
 }

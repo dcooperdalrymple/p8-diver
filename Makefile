@@ -1,5 +1,5 @@
 NAME   = diver
-LUA    = ?;?.lua;./src/utils/?.lua;./src/?.lua;./src/graphics/?.lua;./src/actor/?.lua;./src/actor/enemies/?.lua;./src/actor/projectiles/?.lua;./src/actor/rewards/?.lua;./src/hud/?.lua
+LUA    = ?;?.lua;./src/?.lua;./src/graphics/?.lua;./src/actor/?.lua;./src/actor/enemies/?.lua;./src/actor/projectiles/?.lua;./src/actor/rewards/?.lua;./src/hud/?.lua
 ASSETS = assets.p8
 
 all: $(NAME).p8

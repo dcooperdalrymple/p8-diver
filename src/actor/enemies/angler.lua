@@ -1,9 +1,7 @@
 local function update(self)
     self:update_enemy()
 
-    if self.life<=0 then
-        return
-    end
+    if (self.life<=0) return
 
     -- fix oscillation & dy
     self.y-=self.dy
@@ -16,7 +14,7 @@ local function update(self)
     if Screen:same(self,Player) and not Path:cast(self,Player) then
         self.dx=Player.x-self.x
         self.dy=Player.y-self.y
-        local d=1/sqrt(self.dx*self.dx+self.dy*self.dy)
+        local d=idist(self.dx,self.dy)
         self.dx=self.dx*d*self.sp
         self.dy=self.dy*d*self.sp
 
@@ -39,7 +37,7 @@ return {
             dir=0,
             sp=0.0625,
             update=update,
-            update_angler=update,
+            update_angler=update
         }
     end
 }

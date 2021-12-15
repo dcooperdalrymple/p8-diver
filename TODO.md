@@ -5,10 +5,8 @@
 - screen by screen actors for performance
 - more map design
 - deeper enemies
-- boat shop
 - death animation
 - boss
-- breakable walls
 - enviro suit/lava
 - diver drops into water after hitting start on load screen
 
@@ -29,3 +27,5 @@
 - Reorganization of code with picotool
 - gear ring/inventory
 - door/key
+- boat shop
+- breakable walls

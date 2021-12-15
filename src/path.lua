@@ -1,10 +1,6 @@
 -- pathfinding, used for breathing tube
 
 return {
-    ray_x=0,
-    ray_y=0,
-    rayray_x=0,
-    rayray_y=0,
     calc=function(self,path,start,goal)
         if path==nil or #path<2 then
             path={start,goal}
@@ -18,23 +14,18 @@ return {
             add(path,path[#path])
             path[#path-1].x=self.ray_x
             path[#path-1].y=self.ray_y
-        else
-            -- check if the last point is not needed
-            if #path>2 and not self:castcast(path[#path],path[#path-1],path[#path-2]) then
-                del(path,path[#path-1])
-            end
+        elseif #path>2 and not self:castcast(path[#path],path[#path-1],path[#path-2]) then -- check if the last point is not needed
+            del(path,path[#path-1])
         end
 
         return path
     end,
     get_length=function(self,path) -- get length of list of points
         local l=0
-        local _pt=false
+        local _pt
         for pt in all(path) do
-            if _pt!=false then
-                local dx=_pt.x-pt.x
-                local dy=_pt.y-pt.y
-                l+=sqrt(dx*dx+dy*dy)
+            if _pt then
+                l+=dist(_pt.x-pt.x,_pt.y-pt.y)
             end
             _pt=pt
         end
@@ -45,10 +36,9 @@ return {
         self.ray_y=a.y
         r=r or 1
 
-        local d,dx,dy=0
-        dx=b.x-a.x
-        dy=b.y-a.y
-        d=(1/sqrt(dx*dx+dy*dy))/r
+        local dx=b.x-a.x
+        local dy=b.y-a.y
+        local d=idist(dx,dy)/r
         dx*=d
         dy*=d
 
@@ -66,24 +56,23 @@ return {
         return false
     end,
     castcast=function(self,a,b,c,r) -- cast between a triangle to find solid
-        self.rayray_x=b.x
-        self.rayray_y=b.y
+        local rayray_x=b.x
+        local rayray_y=b.y
         r=r or 1
 
-        local d,dx,dy=0
-        dx=c.x-b.x
-        dy=c.y-b.y
-        d=(1/sqrt(dx*dx+dy*dy))/r
+        local dx=c.x-b.x
+        local dy=c.y-b.y
+        local d=idist(dx,dy)/r
         dx*=d
         dy*=d
 
         while true do
-            self.rayray_x+=dx
-            self.rayray_y+=dy
+            rayray_x+=dx
+            rayray_y+=dy
             if abs(self.ray_x-c.x)<1 and abs(self.ray_y-c.y)<1 then
                 return false
             end
-            if self:cast(a,{x=self.rayray_x,y=self.rayray_y},r) then
+            if self:cast(a,{x=rayray_x,y=rayray_y},r) then
                 return true
             end
         end
@@ -91,7 +80,7 @@ return {
         return false
     end,
     draw=function(self,path,c)
-        _pt=false
+        local _pt
         for pt in all(path) do
             if _pt then
                 line(_pt.x*8,_pt.y*8,pt.x*8,pt.y*8,c)
