@@ -6,9 +6,11 @@
 - more map design
 - deeper enemies
 - death animation
-- boss
 - enviro suit/lava
 - diver drops into water after hitting start on load screen
+- door sfx
+- dagger attack
+- boss attack
 
 ## Completed
 
@@ -29,3 +31,4 @@
 - door/key
 - boat shop
 - breakable walls
+- boss

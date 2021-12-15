@@ -118,11 +118,12 @@ return {
         local y=58-#lines*3
         local w=len*4+6
         local h=#lines*6+14
-        rectfill(x,y,x+w,y+h,0)
+        rectfill(x,y,x+w,y+h,1)
+        rect(x,y,x+w,y+h,7)
         for l in all(lines) do
             print(l,x+4,y+4,7)
             y+=6
         end
-        print("press \142",27+w/2,y+6,5)
+        print("press \142",27+w/2,y+6,6)
     end
 }
