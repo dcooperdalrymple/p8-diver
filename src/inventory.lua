@@ -65,13 +65,15 @@ return {
         -- life hearts
         item=self:get_item("life")
         local i=1
-        for x=16-item.max,15 do
-            if item.quantity<i then
-                pal(Graphics.palbw)
+        for y=0,flr((item.max-1)/5) do
+            for x=16-min(item.max-y*5,5),15 do
+                if item.quantity<i then
+                    pal(Graphics.palbw)
+                end
+                spr(46,x*9-16,y*9+1,1,1)
+                Graphics.reset_pal()
+                i+=1
             end
-            spr(46,x*9-16,1,1,1)
-            Graphics.reset_pal()
-            i+=1
         end
 
         -- Inventory Selector
