@@ -1,7 +1,13 @@
 local function update(self)
     self:update_enemy()
 
-    if (self.life<=0) return
+    if self.life<=0 then
+        if self.s>1 and not self.rewarded then
+            self.rewarded=true
+            Actors:create_item(85,self.x,self.y) -- key
+        end
+        return
+    end
 
     -- bob vertically
     self.y=self._y+sin(State.time/4+self.seed)*2+0.0625
@@ -20,7 +26,7 @@ local function draw(self)
             center=self.center,
             s=self.s,
             x=self.x,
-            y=self.y-0.5,
+            y=self.y-0.5*self.s,
             w=self.w,
             h=1,
             flx=self.flx,
@@ -32,7 +38,7 @@ local function draw(self)
             center=self.center,
             s=self.s,
             x=self.x,
-            y=self.y+0.5,
+            y=self.y+0.5*self.s,
             w=self.w,
             h=1,
             flx=self.flx,

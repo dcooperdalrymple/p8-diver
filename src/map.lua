@@ -19,7 +19,7 @@
 --  7=lava
 
 return {
-    hidden=split("1_10_6_4,53_27_4_5,55_39_7_4,37_58_11_5"), -- x_y_w_h, used to reduce tokens
+    hidden=split("1_10_7_4,53_27_4_5,55_39_7_4,37_58_11_5,43_33_5_5,42_38_4_3"), -- x_y_w_h, used to reduce tokens
 
     screen_width=4,
     screen_height=8,
@@ -147,15 +147,15 @@ return {
     end,
     draw_hud=function(self)
         if self.visited!=false and self.visited_current_x!=false then
-            rectfill(121,10,122+self.screen_width,11+self.screen_height,0)
+            rectfill(121,117,126,126,0)
             for j=0,self.screen_height-1 do
                 for i=0,self.screen_width-1 do
                     if self.visited_current_x==i and self.visited_current_y==j then
-                        pset(122+i,11+j,11)
+                        pset(122+i,118+j,11)
                     elseif self.visited[j][i] then
-                        pset(122+i,11+j,7)
+                        pset(122+i,118+j,7)
                     else
-                        pset(122+i,11+j,3)
+                        pset(122+i,118+j,3)
                     end
                 end
             end
@@ -206,6 +206,6 @@ return {
         end
     end,
     is_solid=function(self,x,y)
-        return fget(self:mget(x,y),0) and not (Config.dev and fget(self:mget(x,y),6))
+        return fget(self:mget(x,y),0) -- and not (Config.dev and fget(self:mget(x,y),6))
     end
 }

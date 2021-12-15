@@ -87,10 +87,5 @@ return {
             end
             _pt=pt
         end
-        if Config.dev then
-            for pt in all(path) do
-                pset(pt.x*8,pt.y*8,12)
-            end
-        end
     end
 }

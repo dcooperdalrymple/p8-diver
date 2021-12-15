@@ -9,10 +9,6 @@ return {
             speed=0.125,
 
             init = function(self)
-                if Config.dev then
-                    self.speed=0.25
-                end
-
                 self.life_timer=0
                 self.life_timer_max=2
 
@@ -41,9 +37,7 @@ return {
                 self.dy=0
                 local sp=self.speed
                 local item=Inventory:get_item("cord")
-                if item.quantity>=item.max and not Config.dev then
-                    sp*=0.1
-                end
+                if (item.quantity>=item.max) sp*=0.1
                 if btn(0) then
                     self.flx=true
                 elseif btn(1) then
@@ -52,13 +46,13 @@ return {
                 if btn(0) and not Map:is_solid(self.x-1,self.y) then
                     self.dx=-sp
                 end
-                if btn(1) and not Map:is_solid(self.x+1,self.y) then
+                if btn(1) and not Map:is_solid(self.x+0.875,self.y) then
                     self.dx=sp
                 end
                 if btn(2) and not Map:is_solid(self.x,self.y-0.625) then
                     self.dy=-sp
                 end
-                if btn(3) and not Map:is_solid(self.x,self.y+0.625) then
+                if btn(3) and not Map:is_solid(self.x,self.y+0.5) then
                     self.dy=sp
                 end
 
@@ -76,9 +70,7 @@ return {
                         Screen:play_sfx(9)
                     elseif item.name=="harpoon" or item.name=="bomb" then
                         if self.projectile_timer<=0 then
-                            if not Config.dev then
-                                Inventory:remove_item(item)
-                            end
+                            Inventory:remove_item(item)
                             self.projectile_timer=self.projectile_timer_max
 
                             if item.name=="harpoon" then
@@ -108,6 +100,8 @@ return {
                                     x-=1
                                 elseif m==122 or m==123 then
                                     y-=1
+                                elseif m==84 then
+                                    y-=1
                                 end
                                 if Map:mget(x,y)==106 then
                                     Map:mclear(x,y,2,2)
@@ -116,7 +110,11 @@ return {
                                     Map:mset(x+2,y,36)
                                     Map:mset(x+2,y+1,36)
                                     Inventory:remove_item(item)
-                                    break
+                                elseif Map:mget(x,y)==68 then
+                                    Map:mclear(x,y,1,2)
+                                    Map:mset(x,y-1,19)
+                                    Map:mset(x,y+2,54)
+                                    Inventory:remove_item(item)
                                 end
                             end
                         end
@@ -150,7 +148,7 @@ return {
                 Screen:play_sfx(10,0.2)
 
                 -- take damage
-                if not Config.dev and not Inventory:remove_item("life") then
+                if not Inventory:remove_item("life") then
                     restart()
                 end
             end

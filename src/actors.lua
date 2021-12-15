@@ -111,7 +111,12 @@ return {
         return self:create_enemy(f,x,y,ActorEnemyUrchin.get())
     end,
     create_squid = function(self,f,x,y)
-        return self:create_enemy(f,x,y,ActorEnemySquid.get())
+        local a = self:create_enemy(f,x,y,ActorEnemySquid.get())
+        if Screen:in_screen(a,9) then
+            a.s=2
+            a.life=4
+        end
+        return a
     end,
     create_angler = function(self,f,x,y)
         return self:create_enemy(f,x,y,ActorEnemyAngler.get())

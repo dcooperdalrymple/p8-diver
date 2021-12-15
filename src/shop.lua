@@ -1,7 +1,7 @@
 return {
     open=false,
     areas=split("21_2_6_4"), -- x_y_w_h
-    items=split("life_16,harpoon_4,bomb_4"),
+    items=split("life_16,harpoon_5,bomb_5"),
     key=nil,
     init=function(self)
         if type(self.areas[1])=="string" then
@@ -26,11 +26,8 @@ return {
     update=function(self)
         self._open=self.open
         if self.open and btnp(5) then
-            if self.key then
+            if self.key and Inventory:remove_item("coin",5) then
                 Inventory:add_item(self.item.name,self.item.amount)
-                if not Config.dev then
-                    Inventory:remove_item("coin",3)
-                end
             end
             self.key=nil
             self.open=not self.open
@@ -64,7 +61,7 @@ return {
             end
 
             Inventory:draw_item("coin",84,84)
-            print("3",80,86,7)
+            print("5",80,86,7)
         end
     end
 }

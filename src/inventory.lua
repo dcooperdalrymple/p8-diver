@@ -26,11 +26,6 @@ return {
         self.equipped_items={}
         self.equipped_item=nil
         self.equipped_key=nil
-
-        if Config.dev then
-            self:add_item("bomb",1,true)
-            self:add_item("harpoon",1,true)
-        end
     end,
     update=function(self)
         if (Dialog.active_key!=false or Shop.open or Shop._open) return
@@ -134,11 +129,8 @@ return {
             item=self:get_item(item)
         end
         amount=amount or 1
+        if (item.quantity-amount<0) return false
         item.quantity-=amount
-        if item.quantity<0 then
-            item.quantity=0
-            return false
-        end
         return true
     end,
     draw_item=function(self,item,x,y,digits)

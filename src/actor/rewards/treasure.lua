@@ -10,14 +10,10 @@ return {
 
                 self.f=57 -- open sprite
 
-                if Config.dev then
-                    printh("chest opened: "..self.r)
-                end
-
                 if self.r=="coin" then
-                    Inventory:add_item("coin",5)
+                    Inventory:add_item("coin",6)
                 elseif self.r=="harpoon" or self.r=="bomb" then
-                    Inventory:add_item(self.r,2,true)
+                    Inventory:add_item(self.r,5,true)
                 elseif self.r=="cord" then
                     Inventory:add_item("cord",16,true)
                 elseif in_table(self.r,split("life,unknown,dagger,key")) then

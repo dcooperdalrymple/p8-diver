@@ -20,6 +20,8 @@ return {
                     Inventory:add_item("cord",8,true)
                 elseif self.name=="speed" then
                     Player.speed+=0.03125
+                elseif self.name=="key" then
+                    Inventory:add_item("key",1,true)
                 end
 
                 self:open_reward()

@@ -1,7 +1,7 @@
 return {
     active_key=false,
     active_index=false,
-    events=split("artifact#you've found_a mysterious_artifact...~what do you do now?#reward~chest~unknown,cord#some extra breathing tube!_this will come in handy...~maybe i should delve deeper?#reward~chest~cord,key#a mysterious key!_there should be a door_around here that fits.#reward~chest~key,bomb#finally!_now i can do_some real damage~or maybe_there's a way_deeper?#reward~chest~bomb"),
+    events=split("artifact#you've found_a mysterious_artifact...~what do you do now?#reward~chest~unknown,cord#some extra breathing tube!_this will come in handy...~maybe i should delve deeper?#reward~chest~cord,key#a mysterious key!_there should be a door_around here that fits.#reward~chest~key,bomb#finally!_now i can do_some real damage~or maybe_there's a way_deeper?#reward~chest~bomb,dagger#a dagger?!_what is this doing_here?~well maybe it_still has some use_left.#reward~chest~dagger"),
     init=function(self)
         self.active_key=false
         self.active_index=false
@@ -54,10 +54,6 @@ return {
         self.events[k].line=1
         self.events[k].activated=true
         self.events[k].completed=false
-
-        if Config.dev then
-            printh("dialog opened: "..self.events[k].name)
-        end
     end,
     draw=function(self)
 
@@ -101,7 +97,7 @@ return {
             else
                 printo("swim:\139\148\131\145",2,11)
                 printo("use:\142",2,17)
-                printo("inv:\151",2,23)
+                printo("inv/shop:\151",2,23)
             end
         end
 
