@@ -44,7 +44,7 @@ local function animate(self,t)
 end
 
 local function set_reward(self,f)
-    self.rf=f
+    self.rf=f or self.f
     if fget(self.rf,2) then
         self.r="coin"
     elseif fget(self.rf,3) then

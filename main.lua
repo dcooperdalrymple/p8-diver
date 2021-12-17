@@ -297,11 +297,9 @@ Map = {
                 elseif fget(m,1) then -- reward
                     if m==25 then -- chest
                         local rf=Map:mget(x+1,y)
-                        a = Actors:create_reward(m,x,y,ActorRewardTreasure(),0,0.375)
-                        a:set_reward(rf)
+                        Actors:create_reward(m,x,y,ActorRewardTreasure(),0,0.375):set_reward(rf)
                     else -- individual item
-                        a = Actors:create_reward(m,x,y,ActorRewardItem())
-                        a:set_reward(m)
+                        Actors:create_reward(m,x,y,ActorRewardItem()):set_reward()
                     end
                 elseif fget(m,2) then -- enemy
                     if fget(m,3) then

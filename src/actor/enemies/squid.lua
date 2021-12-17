@@ -11,7 +11,7 @@ function ActorEnemySquid()
             if self.life<=0 then
                 if self.s>1 and not self.rewarded then
                     self.rewarded=true
-                    Actors:create_item(85,self.x,self.y) -- key
+                    Actors:create_reward(85,self.x,self.y,ActorRewardItem()):set_reward() -- key
                 end
                 return
             end
