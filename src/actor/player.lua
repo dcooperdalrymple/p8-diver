@@ -8,14 +8,22 @@ return {
             h=1.25,
             speed=0.125,
 
+            doors=split("106_2_2_0_0,107_2_2_-1_0,123_2_2_-1_-1,122_2_2_0_-1,68_1_2_0_0,84_1_2_0_-1"), -- f_w_h_dx_dy
+
             init = function(self)
                 self.life_timer=0
                 self.life_timer_max=2
 
                 self.projectile_timer=0
-                self.projectile_timer_max=0.5
+                self.projectile_timer_max=0.25
 
                 self.cord={}
+
+                if type(self.doors[1])=="string" then
+                    for k,v in pairs(self.doors) do
+                        self.doors[k]=split(v,"_",true)
+                    end
+                end
             end,
             update = function(self)
                 self:update_actor()
@@ -26,10 +34,10 @@ return {
 
                 -- timers
                 if self.life_timer>0 then
-                    self.life_timer-=Config.tdelta
+                    self.life_timer-=tdelta
                 end
                 if self.projectile_timer>0 then
-                    self.projectile_timer-=Config.tdelta
+                    self.projectile_timer-=tdelta
                 end
 
                 -- player movement
@@ -76,6 +84,7 @@ return {
                             if item.name=="harpoon" then
                                 a=Actors:create_harpoon(self.x,self.y)
                                 a.x-=1
+                                a.y-=0.375
                             else
                                 a=Actors:create_bomb(self.x,self.y)
                                 a.y-=0.625
@@ -95,26 +104,14 @@ return {
                     elseif item.name=="key" then
                         for y=self.y-1,self.y+1 do
                             for x=self.x-1,self.x+1 do
-                                local m=Map:mget(x,y)
-                                if m==107 or m==123 then
-                                    x-=1
-                                elseif m==122 or m==123 then
-                                    y-=1
-                                elseif m==84 then
-                                    y-=1
-                                end
-                                if Map:mget(x,y)==106 then
-                                    Map:mclear(x,y,2,2)
-                                    Map:mset(x-1,y,34)
-                                    Map:mset(x-1,y+1,34)
-                                    Map:mset(x+2,y,36)
-                                    Map:mset(x+2,y+1,36)
-                                    Inventory:remove_item(item)
-                                elseif Map:mget(x,y)==68 then
-                                    Map:mclear(x,y,1,2)
-                                    Map:mset(x,y-1,19)
-                                    Map:mset(x,y+2,54)
-                                    Inventory:remove_item(item)
+                                for a in all(self.doors) do
+                                    if Map:mget(x,y)==a[1] then
+                                        x+=a[4]
+                                        y+=a[5]
+                                        Map:mclear(x,y,a[2],a[3])
+                                        Inventory:remove_item(item)
+                                        Screen:play_sfx(19,1.5)
+                                    end
                                 end
                             end
                         end
@@ -135,7 +132,7 @@ return {
 
             end,
             draw = function(self)
-                if self.life_timer>0 and flr(self.life_timer/Config.tdelta/4)%2==0 then
+                if self.life_timer>0 and flr(self.life_timer/tdelta/4)%2==0 then
                     pal(Graphics.palbw)
                     self:draw_actor()
                     Graphics.reset_pal()
