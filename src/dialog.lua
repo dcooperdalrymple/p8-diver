@@ -58,7 +58,7 @@ return {
     draw=function(self)
 
         -- start controls
-        if Screen.current_index==Screen.start_index then
+        if Screen.current_index==1 then
             if not State.started then
                 local text="diver"
                 local s=4+sin(State.time/4)*2+0.5

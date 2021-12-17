@@ -114,7 +114,7 @@ return {
         local a = self:create_enemy(f,x,y,ActorEnemySquid.get())
         if Screen:in_screen(a,9) then
             a.s=2
-            a.life=4
+            a.life=8
         end
         return a
     end,

@@ -3,14 +3,11 @@
 ## Not Started
 
 - screen by screen actors for performance
-- more map design
 - deeper enemies
 - death animation
 - enviro suit/lava
 - diver drops into water after hitting start on load screen
-- door sfx
 - dagger attack
-- boss attack
 
 ## Completed
 
@@ -32,3 +29,6 @@
 - boat shop
 - breakable walls
 - boss
+- more map design
+- boss attack
+- door sfx

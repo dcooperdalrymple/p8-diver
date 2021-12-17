@@ -1,6 +1,6 @@
 return {
     open=false,
-    areas=split("21_2_6_4"), -- x_y_w_h
+    areas=split("21_2_6_4_buy something_will ya?,33_82_4_3_security comp_access granted,38_99_4_3_core facility_access granted"), -- x_y_w_h_text1_text2
     items=split("life_16,harpoon_5,bomb_5"),
     key=nil,
     init=function(self)
@@ -11,7 +11,9 @@ return {
                     x=i[1],
                     y=i[2],
                     w=i[3],
-                    h=i[4]
+                    h=i[4],
+                    text1=i[5],
+                    text2=i[6]
                 }
             end
             for k,i in pairs(self.items) do
@@ -39,6 +41,7 @@ return {
         elseif btnp(5) then
             for area in all(self.areas) do
                 if collide(Player,area) then
+                    self.area=area
                     self.open=not self.open
                     State.paused=self.open
                     break
@@ -50,8 +53,8 @@ return {
         if self.open then
             rectfill(32,32,96,96,1)
             rect(32,32,96,96,7)
-            print("buy something,",36,36,7)
-            print("will ya?",36,44,7)
+            print(self.area.text1,36,36,7)
+            print(self.area.text2,36,44,7)
             for k,i in pairs(self.items) do
                 if self.key==k then
                     circfill(37,46+k*12,1,8)

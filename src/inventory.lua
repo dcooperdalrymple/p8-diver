@@ -37,9 +37,9 @@ return {
 
         if self.open and self.timer<self.timer_max then
             -- animation timer
-            self.timer+=Config.tdelta
+            self.timer+=tdelta
         elseif not self.open and self.timer>0 then
-            self.timer-=Config.tdelta
+            self.timer-=tdelta
         end
 
         -- item selection logic

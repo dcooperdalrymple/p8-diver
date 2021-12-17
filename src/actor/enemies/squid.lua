@@ -11,6 +11,16 @@ local function update(self)
 
     -- bob vertically
     self.y=self._y+sin(State.time/4+self.seed)*2+0.0625
+
+    -- shoot (boss only)
+    if self.s>1 and Screen:same(self,Player) and not Path:cast(self,Player) then
+        self.timer-=tdelta
+        if self.timer<=0 then
+            self.timer=3
+            local a=Actors:create_urchin(39,self.x,self.y)
+            follow_target(a,Player,0.1)
+        end
+    end
 end
 
 local function draw(self)
@@ -63,7 +73,8 @@ return {
             update_squid=update,
             draw=draw,
             draw_squid=draw,
-            life=2
+            life=2,
+            timer=2
         }
     end
 }

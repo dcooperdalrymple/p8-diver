@@ -2,7 +2,7 @@ local function update(self)
     self:update_actor()
 
     if self.animating then
-        self.t-=Config.tdelta
+        self.t-=tdelta
         if self.t<=0 then
             Actors:remove_actor(self)
         end

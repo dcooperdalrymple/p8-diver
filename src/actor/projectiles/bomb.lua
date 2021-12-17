@@ -24,7 +24,7 @@ return {
                     self.dy=0
                 end
 
-                self.timer-=Config.tdelta
+                self.timer-=tdelta
 
                 if self.timer>0 then
                     for a in all(Actors.actors) do
