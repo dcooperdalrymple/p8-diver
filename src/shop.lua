@@ -33,17 +33,17 @@ return {
             end
             self.key=nil
             self.open=not self.open
-            State.paused=self.open
+            Paused=self.open
         elseif self.open and btnp(4) then
             self.key,self.item=next(self.items,self.key)
-        elseif State.paused then
+        elseif Paused then
             return
         elseif btnp(5) then
             for area in all(self.areas) do
                 if collide(Player,area) then
                     self.area=area
                     self.open=not self.open
-                    State.paused=self.open
+                    Paused=self.open
                     break
                 end
             end

@@ -32,7 +32,7 @@ return {
 
         if btnp(5) then
             self.open=not self.open
-            State.paused=self.open
+            Paused=self.open
         end
 
         if self.open and self.timer<self.timer_max then

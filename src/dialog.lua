@@ -1,7 +1,14 @@
 return {
     active_key=false,
     active_index=false,
-    events=split("artifact#you've found_a mysterious_artifact...~what do you do now?#reward~chest~unknown,cord#some extra breathing tube!_this will come in handy...~maybe i should delve deeper?#reward~chest~cord,key#a mysterious key!_there should be a door_around here that fits.#reward~chest~key,bomb#finally!_now i can do_some real damage~or maybe_there's a way_deeper?#reward~chest~bomb,dagger#a dagger?!_what is this doing_here?~well maybe it_still has some use_left.#reward~chest~dagger"),
+    events=split("
+        artifact#you've found_a mysterious_artifact...~what do you do now?#reward~chest~unknown,
+        cord#some extra breathing tube!_this will come in handy...~maybe i should delve deeper?#reward~chest~cord,
+        key#a mysterious key!_there should be a door_around here that fits.#reward~chest~key,
+        bomb#finally!_now i can do_some real damage~or maybe_there's a way_deeper?#reward~chest~bomb,
+        dagger#a dagger?!_what is this doing_here?~well maybe it_still has some use_left.#reward~chest~dagger,
+        enterbase#what is this?_it must be...~some kind of_facility?#screen~27,
+        escape#let's get_out of here!~quick!_get in the ship.#screenchange~28~29"),
     init=function(self)
         self.active_key=false
         self.active_index=false
@@ -35,13 +42,13 @@ return {
     end,
     update=function(self)
         if self.active_key!=false then
-            State.paused=true
+            Paused=true
             local e=self.events[self.active_key]
             if btnp(4) then
                 if e.line>=#e.text then
                     e.completed=true
                     self.active_key=false
-                    State.paused=false
+                    Paused=false
                 else
                     e.line+=1
                 end
@@ -59,9 +66,9 @@ return {
 
         -- start controls
         if Screen.current_index==1 then
-            if not State.started then
+            if not Started then
                 local text="diver"
-                local s=4+sin(State.time/4)*2+0.5
+                local s=4+sin(Time/4)*2+0.5
                 local x=64-#text*2*s+s/2
                 local y=64-5*s/2
 

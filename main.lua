@@ -5,15 +5,15 @@ tdelta=1/30 --1/60
 
 State = {
     reset=function (self)
-        self.time=0
-        self.started=false
-        self.paused=false
+        Time=0
+        Started=false
+        Paused=false
     end,
     update=function (self)
-        if not self.started and btnp(4) then
-            self.started=true
+        if not Started and btnp(4) then
+            Started=true
         end
-        self.time+=tdelta
+        Time+=tdelta
     end
 }
 
@@ -110,7 +110,7 @@ Path = {
 Graphics = {
     palbw=split("0,5,5,5,5,6,7,6,6,7,7,6,6,6,7,0"),
     reset_pal=function(force)
-        if (State.paused and force!=true) return
+        if (Paused and force!=true) return
         pal()
         palt(14, true)
         palt(0, false)
@@ -242,12 +242,33 @@ Camera = {
     end
 }
 Map = {
+    --[[
+    flags:
+        0=solid
+        1=treasure
+            2=coin
+            3=harpoon
+            4=cord
+            5=heart
+            6=speed
+            7=bomb
+        2=enemy
+            3=fish
+            4=urchin
+            5=squid
+            6=angler
+            7=alien
+        3=boat
+        4=sky
+        5=player
+        6=bombable
+        7=lava
+    ]]--
+
     hidden=split("1_10_7_4,53_27_4_5,55_39_7_4,37_58_11_5,43_33_5_5,42_38_4_3,48_59_4_2,48_61_7_3,16_86_4_4,27_86_5_4,26_75_6_5,53_70_11_6,58_75_6_5,58_80_6_16,58_96_6_2,59_96_5_4,60_100_4_5,48_96_11_4,48_88_6_3,51_124_4_4,56_124_4_4"), -- x_y_w_h, used to reduce tokens
 
     screen_width=4,
     screen_height=8,
-    width=64,
-    height=128,
 
     visited=false,
     visited_current_x=false,
@@ -268,41 +289,61 @@ Map = {
         end
     end,
     load=function(self)
-        for y=0,self.height do
-            for x=0,self.width do
+        for y=0,128 do
+            for x=0,64 do
                 m=self:mget(x,y)
+                local a
                 if fget(m,0) then -- solid
                 elseif fget(m,1) then -- reward
                     if m==25 then -- chest
-                        Actors:create_treasure(m,x,y)
+                        local rf=Map:mget(x+1,y)
+                        a = Actors:create_reward(m,x,y,ActorRewardTreasure(),0,0.375)
+                        a:set_reward(rf)
                     else -- individual item
-                        Actors:create_item(m,x,y)
+                        a = Actors:create_reward(m,x,y,ActorRewardItem())
+                        a:set_reward(m)
                     end
                 elseif fget(m,2) then -- enemy
                     if fget(m,3) then
-                        Actors:create_fish(m,x,y)
+                        Actors:create_enemy(m,x,y,ActorEnemyFish())
                     elseif fget(m,4) then
-                        Actors:create_urchin(m,x,y)
+                        Actors:create_enemy(m,x,y,ActorEnemyUrchin())
                     elseif fget(m,5) then
-                        Actors:create_squid(m,x,y)
+                        a=Actors:create_enemy(m,x,y,ActorEnemySquid())
+                        if Screen:in_screen(a,9) then -- boss
+                            a.s=2
+                            a.life=8
+                        end
                     elseif fget(m,6) then
-                        Actors:create_angler(m,x,y)
+                        a=Actors:create_enemy(m,x,y,ActorEnemyAngler())
+                        if Screen:in_screen(a,18) then -- boss
+                            a.s=2
+                            a.life=8
+                        end
+                    elseif fget(m,7) then
+                        a=Actors:create_enemy(m,x,y,ActorEnemyAlien())
+                        if Screen:in_screen(a,28) then -- control room
+                            a.s=2
+                            a.life=4
+                        end
                     end
                 elseif fget(m,3) then -- boat
-                    Actors:create_boat(m,x,y)
+                    if not Boat then
+                        Boat = Actors:create_actor(m,x,y,ActorBoat(),0,1.25,2)
+                    end
                 elseif fget(m,5) then -- player
-                    Actors:create_player(m,x,y)
+                    Player = Actors:create_actor(m,x,y,ActorPlayer())
                 end
             end
         end
     end,
     update=function(self)
         -- animate wave
-        local f=3+flr(State.time*2)%4
+        local f=3+flr(Time*2)%4
 
         -- water
         local y=3
-        for x=0,self.width do
+        for x=0,64 do
             local m=self:mget(x,y)
             if m>=3 and m<=6 then
                 self:mset(x,y,f)
@@ -312,7 +353,7 @@ Map = {
         -- lava
         f+=110
         y=62
-        for x=0,self.width do
+        for x=0,64 do
             local m=self:mget(x,y)
             if m>=113 and m<=116 then
                 self:mset(x,y,f)
@@ -322,17 +363,17 @@ Map = {
         -- hud
         if not self.visited then
             self.visited={}
-            for j=0,self.screen_height do
+            for j=0,8 do
                 self.visited[j]={}
-                for i=0,self.screen_width do
+                for i=0,4 do
                     self.visited[j][i]=false
                 end
             end
         end
 
         if Screen.current_index!=false then
-            local x=Screen.current_index%self.screen_width
-            local y=flr(Screen.current_index/self.screen_width)
+            local x=Screen.current_index%4
+            local y=flr(Screen.current_index/4)
             if not self.visited[y][x] then
                 self.visited[y][x]=true
             end
@@ -371,8 +412,8 @@ Map = {
     draw_hud=function(self)
         if self.visited!=false and self.visited_current_x!=false then
             rectfill(121,117,126,126,0)
-            for j=0,self.screen_height-1 do
-                for i=0,self.screen_width-1 do
+            for j=0,7 do
+                for i=0,3 do
                     if self.visited_current_x==i and self.visited_current_y==j then
                         pset(122+i,118+j,11)
                     elseif self.visited[j][i] then
@@ -455,8 +496,14 @@ Screen = {
         end
     end,
     change=function(self)
+        local d={"screenchange",self.current_index}
+
         self.current_index=self:get_index(Player)
         self.current_position=self.get_position(Player)
+
+        add(d,self.current_index)
+        Dialog:check(d)
+        Dialog:check({"screen",self.current_index})
 
         self:music()
         self:sfx()
@@ -507,7 +554,7 @@ Screen = {
         local bgc=8
         local fgc=0
         local buc=0
-        if State.paused then
+        if Paused then
             bgc=0
             fgc=5
             buc=6
@@ -532,7 +579,7 @@ Screen = {
         end
         fillp()
 
-        if State.paused!=true then
+        if Paused!=true then
             local first=#self.bubbles==0
             while #self.bubbles<self.bubbles_max do
                 local y=128
@@ -546,7 +593,7 @@ Screen = {
                 })
             end
             for b in all(self.bubbles) do
-                b.dx=cos(b.seed+State.time)/10
+                b.dx=cos(b.seed+Time)/10
                 b.x+=b.dx
                 b.y+=b.dy
                 if b.x<0 or b.x>128 or b.y<0 then
@@ -593,9 +640,9 @@ function restart()
     Map:load()
     Actors:load() -- must be run after Map:load() for actors to be created
 
-    --[ Dev Mode
+    --[[ Dev Mode
     Player.speed=0.33
-    Player.x=38
+    Player.x=8
     Player.y=115
     Inventory:add_item("life",7,true)
     Inventory:add_item("cord",512,true)
@@ -612,14 +659,14 @@ end
 function _update()
 --function _update60()
 
-    if not State.paused then
+    if not Paused then
         Actors:update()
         Map:update()
         --Clouds:update()
     end
 
     Dialog:update()
-    if State.started then
+    if Started then
         Shop:update()
         Inventory:update()
     end
@@ -630,7 +677,7 @@ function _update()
 end
 
 function _draw()
-    if State.paused then
+    if Paused then
         pal(Graphics.palbw)
     end
 
@@ -658,12 +705,12 @@ function _draw()
 
     Map:draw_hidden()
 
-    if State.paused then
+    if Paused then
         Graphics.reset_pal(true)
     end
 
     -- reset for hud
-    if State.started then
+    if Started then
         camera()
         Inventory:draw()
         Map:draw_hud()
@@ -755,12 +802,12 @@ function idist(x,y)
 end
 function follow_target(self,b,speed)
     speed=speed or 1
+    flx=flx or true
     self.dx=b.x-self.x
     self.dy=b.y-self.y
     local d=idist(self.dx,self.dy)
     self.dx*=d*speed
     self.dy*=d*speed
-    self.flx=self.dx<0
 end
 
 -- Debug

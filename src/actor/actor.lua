@@ -2,8 +2,8 @@ local function update(self)
     self.x+=self.dx
     self.y+=self.dy
 
-    if self.a!=false and self.at+self.as<=State.time then
-        self.at=State.time
+    if self.a!=false and self.at+self.as<=Time then
+        self.at=Time
         self.ai+=1
         if self.ai>count(self.a) then
             self.ai=1
@@ -30,33 +30,31 @@ local function draw(self)
     end
 end
 
-return {
-    get=function ()
-        return {
-            class="",
-            name="",
-            f=0,
-            x=0,
-            y=0,
-            dx=0,
-            dy=0,
-            w=1,
-            h=1,
-            s=1, -- scale
-            center=true,
-            flx=false,
-            fly=false,
+function Actor()
+    return {
+        class="",
+        name="",
+        f=0,
+        x=0,
+        y=0,
+        dx=0,
+        dy=0,
+        w=1,
+        h=1,
+        s=1, -- scale
+        center=true,
+        flx=false,
+        fly=false,
 
-            init=function(self) end,
-            update=update,
-            update_actor=update,
-            draw=draw,
-            draw_actor=draw,
+        init=function(self) end,
+        update=update,
+        update_actor=update,
+        draw=draw,
+        draw_actor=draw,
 
-            a=false, -- list of frames
-            as=1, -- animation speed (sec)
-            at=State.time, -- animation timer
-            ai=1 -- animation index
-        }
-    end
-}
+        a=false, -- list of frames
+        as=1, -- animation speed (sec)
+        at=Time, -- animation timer
+        ai=1 -- animation index
+    }
+end

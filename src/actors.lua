@@ -1,21 +1,22 @@
-Actor=require("actor/actor")
+require("actor/actor")
 
-ActorReward=require("actor/reward")
-ActorRewardItem=require("actor/rewards/item")
-ActorRewardTreasure=require("actor/rewards/treasure")
+require("actor/reward")
+require("actor/rewards/item")
+require("actor/rewards/treasure")
 
-ActorEnemy=require("actor/enemy")
-ActorEnemyFish=require("actor/enemies/fish")
-ActorEnemyUrchin=require("actor/enemies/urchin")
-ActorEnemySquid=require("actor/enemies/squid")
-ActorEnemyAngler=require("actor/enemies/angler")
+require("actor/enemy")
+require("actor/enemies/fish")
+require("actor/enemies/urchin")
+require("actor/enemies/squid")
+require("actor/enemies/angler")
+require("actor/enemies/alien")
 
-ActorBoat=require("actor/boat")
-ActorPlayer=require("actor/player")
+require("actor/boat")
+require("actor/player")
 
-ActorProjectile=require("actor/projectile")
-ActorProjectileHarpoon=require("actor/projectiles/harpoon")
-ActorProjectileBomb=require("actor/projectiles/bomb")
+require("actor/projectile")
+require("actor/projectiles/harpoon")
+require("actor/projectiles/bomb")
 
 return {
     init = function(self)
@@ -35,7 +36,7 @@ return {
             a={}
         end
 
-        local b=Actor.get()
+        local b=Actor()
 
         for k,v in pairs(a) do
             b[k]=v
@@ -74,29 +75,18 @@ return {
 
     create_reward = function(self,f,x,y,a,dx,dy)
         local a = a or {}
-        local b = ActorReward.get()
+        local b = ActorReward()
 
         for k,v in pairs(a) do
             b[k]=v
         end
 
         return self:create_actor(f,x,y,b,dx,dy)
-    end,
-    create_item = function(self,f,x,y)
-        local a = self:create_reward(f,x,y,ActorRewardItem.get())
-        a:set_reward(f)
-        return a
-    end,
-    create_treasure = function(self,f,x,y)
-        local rf = Map:mget(x+1,y)
-        local a = self:create_reward(f,x,y,ActorRewardTreasure.get(),0,0.375)
-        a:set_reward(rf)
-        return a
     end,
 
     create_enemy = function(self,f,x,y,a,dx,dy)
         local a = a or {}
-        local b = ActorEnemy.get()
+        local b = ActorEnemy()
 
         for k,v in pairs(a) do
             b[k]=v
@@ -104,52 +94,15 @@ return {
 
         return self:create_actor(f,x,y,b,dx,dy)
     end,
-    create_fish = function(self,f,x,y)
-        return self:create_enemy(f,x,y,ActorEnemyFish.get())
-    end,
-    create_urchin = function(self,f,x,y)
-        return self:create_enemy(f,x,y,ActorEnemyUrchin.get())
-    end,
-    create_squid = function(self,f,x,y)
-        local a = self:create_enemy(f,x,y,ActorEnemySquid.get())
-        if Screen:in_screen(a,9) then
-            a.s=2
-            a.life=8
-        end
-        return a
-    end,
-    create_angler = function(self,f,x,y)
-        return self:create_enemy(f,x,y,ActorEnemyAngler.get())
-    end,
 
-    create_boat = function(self,f,x,y)
-        if Boat!=false then
-            return
-        end
-        Boat = self:create_actor(f,x,y,ActorBoat.get(),0,1.25,2)
-    end,
-
-    create_player = function(self,f,x,y)
-        if Player!=false then
-            return
-        end
-        Player = self:create_actor(f,x,y,ActorPlayer.get())
-    end,
-
-    create_projectile = function(self,a,x,y)
+    create_projectile = function(self,a,x,y,dx,dy)
         local a = a or {}
-        local b = ActorProjectile.get()
+        local b = ActorProjectile()
 
         for k,v in pairs(a) do
             b[k]=v
         end
 
-        return self:create_actor(b.f,x,y,b)
+        return self:create_actor(b.f,x,y,b,dx,dy)
     end,
-    create_harpoon = function(self,x,y)
-        return self:create_projectile(ActorProjectileHarpoon.get(),x,y)
-    end,
-    create_bomb = function(self,x,y)
-        return self:create_projectile(ActorProjectileBomb.get(),x,y)
-    end
 }

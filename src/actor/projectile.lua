@@ -1,6 +1,6 @@
 local function init(self)
     if self.flx then
-        a.dx*=-1
+        self.dx*=-1
     end
 end
 
@@ -25,15 +25,13 @@ local function update(self)
     end
 end
 
-return {
-    get=function ()
-        return {
-            class="projectile",
-            dmg=1,
-            init=init,
-            init_projectile=init,
-            update=update,
-            update_projectile=update,
-        }
-    end
-}
+function ActorProjectile()
+    return {
+        class="projectile",
+        dmg=1,
+        init=init,
+        init_projectile=init,
+        update=update,
+        update_projectile=update,
+    }
+end

@@ -66,33 +66,31 @@ local function set_reward(self,f)
     end
 end
 
-return {
-    get=function ()
-        return {
-            class="reward",
-            w=1,
-            h=1,
+function ActorReward()
+    return {
+        class="reward",
+        w=1,
+        h=1,
 
-            rf=-1,
-            r="unknown",
+        rf=-1,
+        r="unknown",
 
-            activated=false,
-            animating=false,
-            collided=false,
+        activated=false,
+        animating=false,
+        collided=false,
 
-            update=update,
-            update_reward=update,
-            draw=draw,
-            draw_reward=draw,
+        update=update,
+        update_reward=update,
+        draw=draw,
+        draw_reward=draw,
 
-            open=open,
-            open_reward=open,
+        open=open,
+        open_reward=open,
 
-            animate=animate,
-            animate_reward=animate,
+        animate=animate,
+        animate_reward=animate,
 
-            set_reward=set_reward,
-            _set_reward=set_reward,
-        }
-    end
-}
+        set_reward=set_reward,
+        _set_reward=set_reward,
+    }
+end

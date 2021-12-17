@@ -6,7 +6,7 @@ return {
 
         for c in all(self.clouds) do
             c.x+=c.dx
-            c.y=c._y+sin(State.time*c.dt+c.seed)*c.ds
+            c.y=c._y+sin(Time*c.dt+c.seed)*c.ds
             if c.x-c.r1>128*Map.screen_width then
                 del(self.clouds,c)
             end
