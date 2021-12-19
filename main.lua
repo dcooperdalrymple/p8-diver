@@ -440,9 +440,7 @@ function ActorEnemy()
         self:update_actor()
 
         if self.life>0 then
-            if collide(Player,self) then
-                Player:damage()
-            end
+            Player:damage(self)
         elseif self.dy!=0 and Map:is_solid(self.x,self.y+self.dy) then
             self.dy=0
         end
@@ -553,7 +551,7 @@ function ActorEnemySquid()
             if self.s>1 and Screen:same(self,Player) and not Path:cast(self,Player) then
                 self.timer-=tdelta
                 if self.timer<=0 then
-                    self.timer=3
+                    self.timer=3+rnd(2)
                     local a=Actors:create_enemy(39,self.x,self.y,ActorEnemyUrchin())
                     follow_target(a,Player,0.1)
                 end
@@ -596,7 +594,7 @@ function ActorEnemySquid()
             self.__y=self.y
         end,
         life=2,
-        timer=2
+        timer=5
     }
 end
 function ActorEnemyAngler()
@@ -645,10 +643,8 @@ function ActorEnemyAlien()
             self:update_enemy()
 
             for a in all(self.shots) do
-                if Map:is_solid(a.x,a.y) or not Screen:same(a,self) then
-                    del(self.shots,a)
-                elseif collide(a,Player) then
-                    Player:damage()
+                if Map:is_solid(a.x,a.y) or not Screen:same(a,self) or Player:collide(a) then
+                    Player:damage(a)
                     del(self.shots,a)
                 else
                     a.x+=a.dx
@@ -873,8 +869,18 @@ function ActorPlayer()
             end
             Graphics.reset_pal()
         end,
-        damage = function(self)
-            if (Player.life_timer>0) return
+        collide = function(self,obj)
+            return collide({
+                center=true,
+                x=self.x,
+                y=self.y,
+                w=1.5,
+                h=0.75
+            },obj)
+        end,
+        damage = function(self,obj)
+            if (self.life_timer>0) return
+            if (obj and not self:collide(obj)) return
 
             self.life_timer=2 -- timer for invincibility
             Screen:play_sfx(10,0.2)
@@ -1484,13 +1490,23 @@ Screen = {
         index=index or self.current_index
         return self:in_screen(a,index) and self:in_screen(b,index)
     end,
-    sfx=function(self,index)
+    get_level=function(self,index)
         index=index or self:get_index(Player)
-        local selected=0
-        if (index<8 and index!=4) or index==11 then
+        local l=flr(index/8)
+        if index==4 then
+            l=1
+        elseif index==11 then
+            l=0
+        end
+        return l
+    end,
+    sfx=function(self,index)
+        local l=self:get_level(index)
+        local selected=8
+
+        local selected=8
+        if l==0 then
             selected=7
-        else
-            selected=8
         end
         if selected!=self.current_sfx then
             sfx(selected,3)
@@ -1498,20 +1514,14 @@ Screen = {
         end
     end,
     music=function(self,index)
-        index=index or self:get_index(Player)
-        local selected=flr(index/8)
-        if index==4 then
-            selected=1
-        elseif index==11 then
-            selected=0
-        end
+        local selected=self:get_level(index)
         if selected!=self.current_music then
             music(selected)
             self.current_music=selected
         end
     end,
     draw_bg=function(self,index)
-        index=index or self:get_index(Player)
+        local l=self:get_level(index)
         local bgc=8
         local fgc=0
         local buc=0
@@ -1519,15 +1529,15 @@ Screen = {
             bgc=0
             fgc=5
             buc=6
-        elseif (index<8 and index!=4) or index==11 then
+        elseif l==0 then
             bgc=1
             fgc=2
             buc=12
-        elseif index<16 then
+        elseif l==1 then
             bgc=2
             fgc=0
             buc=0
-        elseif index<24 then
+        elseif l==2 then
             bgc=0
             fgc=8
             buc=8
@@ -1581,6 +1591,7 @@ Dialog = {
         artifact#you've found_a mysterious_artifact...~what do you do now?#reward~chest~unknown,
         cord#some extra breathing tube!_this will come in handy...~maybe i should delve deeper?#reward~chest~cord,
         key#a mysterious key!_there should be a door_around here that fits.#reward~chest~key,
+        harpoon#sweet!_now i can_defend myself~there are only_5 harpoons_in this chest~looks like_i have to_be stingy#reward~chest~harpoon,
         bomb#finally!_now i can do_some real damage~or maybe_there's a way_deeper?#reward~chest~bomb,
         dagger#a dagger?!_what is this doing_here?~looks aged_and blunt with_weird markings.~well maybe it_still has some use_left.#reward~chest~dagger,
         envirosuit#oooh a fancy_new diving_suit!~the fibers seem_incredibly durable.~who made_this?#reward~item~suit,
@@ -1622,7 +1633,7 @@ Dialog = {
         if self.active_key!=false then
             Paused=true
             local e=self.events[self.active_key]
-            if btnp(4) then
+            if btnp(5) then
                 if e.line>=#e.text then
                     e.completed=true
                     self.active_key=false
@@ -1681,7 +1692,7 @@ Dialog = {
                 printo(text,64-#text*2,86)
             else
                 printo("swim:\139\148\131\145",2,11)
-                printo("use:\142",2,17)
+                printo("use/select:\142",2,17)
                 printo("inv/shop:\151",2,23)
             end
         end
@@ -1709,7 +1720,7 @@ Dialog = {
             print(l,x+4,y+4,7)
             y+=6
         end
-        print("press \142",27+w/2,y+6,6)
+        print("press \151",27+w/2,y+6,6)
     end
 }
 Shop = {
@@ -1780,13 +1791,15 @@ Shop = {
             print(self.area.text1,36,36,7)
             print(self.area.text2,36,44,7)
             for k,i in pairs(self.items) do
-                if self.can_buy(i.name) then
-                    if self.key==k then
-                        circfill(37,46+k*12,1,8)
-                    end
-                    Inventory:draw_item(i.name,42,42+k*12)
-                    print(i.name,53,44+k*12,7)
+                if self.key==k then
+                    circfill(37,46+k*12,1,8)
                 end
+                local c=5
+                if self.can_buy(i.name) then
+                    c=7
+                    Inventory:draw_item(i.name,42,42+k*12)
+                end
+                print(i.name,53,44+k*12,c)
             end
 
             Inventory:draw_item("coin",84,84)
@@ -1967,11 +1980,13 @@ function restart()
     Actors:load() -- must be run after Map:load() for actors to be created
 
     --[[ Dev Mode
-    Player.speed=0.33
+    Player.suit=true
     Player.x=8
-    Player.y=36
-    Inventory:add_item("life",7,true)
+    Player.y=120
+    --Player.speed=0.33
     Inventory:add_item("cord",512,true)
+    --[
+    Inventory:add_item("life",7,true)
     Inventory:add_item("harpoon",99,true)
     Inventory:add_item("bomb",99,true)
     Inventory:add_item("dagger",1,true)
@@ -1991,11 +2006,11 @@ function _update()
         --Clouds:update()
     end
 
-    Dialog:update()
     if Started then
         Shop:update()
         Inventory:update()
     end
+    Dialog:update()
 
     Fade:update()
     State:update()
@@ -2017,12 +2032,13 @@ function _draw()
     --Clouds:draw()
 
     -- draw everything else black
-    Graphics.draw_around(Screen.current_position.x*8,Screen.current_position.y*8,16*8,16*8,0)
+    Graphics.draw_around(Screen.current_position.x*8,Screen.current_position.y*8,128,128,0)
 
+    local l=Screen:get_level()
     local c=5
-    if Screen.current_index<8 then
+    if l==0 then
         c=2
-    elseif Screen.current_index<16 then
+    elseif l==1 then
         c=1
     end
     Path:draw(Player.cord,c)
