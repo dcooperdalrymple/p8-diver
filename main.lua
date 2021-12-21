@@ -1,5 +1,5 @@
 -- diver
--- by coopersnout
+-- by coopersnout, 2021
 
 tdelta=1/30 --1/60
 
@@ -864,7 +864,7 @@ function ActorPlayer()
             },obj)
         end,
         damage = function(self,obj)
-            if (self.life_timer>0 or (obj and not self:collide(obj))) return
+            if (self.life_timer>0 or (type(obj)=="table" and not self:collide(obj)) or Dead) return
 
             self.life_timer=2 -- timer for invincibility
             Screen:play_sfx(10,0.2)
@@ -879,8 +879,7 @@ function ActorPlayer()
                 self.fly=true
                 self.a=false
                 self.f=16
-                music(5)
-                Screen.current_music=5
+                Screen:_music(5)
             end
         end
     }
@@ -950,11 +949,16 @@ function ActorProjectileBomb()
         dmg=2,
         timer=3,
         _timer=2,
-        exploded=false,
+        damaged={},
 
         init = function(self)
             self:init_projectile()
             Screen:play_sfx(10,0.2)
+        end,
+        get_radius = function(self)
+            local a=self.timer*-4
+            if (a>1) a=2-a
+            return a*4
         end,
         update = function(self)
             self:update_actor() -- no update_projectile
@@ -978,45 +982,44 @@ function ActorProjectileBomb()
             if self.timer>0 and flr(self.timer)!=self._timer and self._timer!=0 then
                 self._timer=flr(self.timer)
                 Screen:play_sfx(10,0.2)
-            elseif self.timer<=0 and not self.exploded then
-                self.exploded=true
+            elseif self.timer<=0 and self.timer>-0.5 then
                 self.dy=0
+
+                local r=self:get_radius()
                 for a in all(Actors.actors) do
-                    if a.class=="enemy" and a.life>0 and in_radius(self,a,2.5) then -- 3=blast_radius
+                    if not in_table(a,self.damaged) and in_radius(self,a,r) and in_table(a.class,split("enemy,player")) then
+                        add(self.damaged,a)
                         a:damage(self.dmg)
-                    elseif a.class=="player" and in_radius(self,a,2.5) then
-                        a:damage()
                     end
                 end
-                for y=self.y-2,self.y+2 do
-                    for x=self.x-2,self.x+2 do
-                        local m=Map:mget(x,y)
-                        if fget(m,0) and fget(m,6) then
-                            Map:mclear(x,y)
-                        end
+
+                for i=0,16 do
+                    local x=self.x+cos(i/16)*r
+                    local y=self.y+sin(i/16)*r
+                    local m=Map:mget(x,y)
+                    if fget(m,0) and fget(m,6) then
+                        Map:mclear(x,y)
                     end
                 end
-                Screen:play_sfx(18,0.5)
-            elseif self.timer<=-1 then
+
+                if not self.exploded then
+                    self.exploded=true
+                    Screen:play_sfx(18,0.5)
+                end
+            elseif self.timer<=-0.5 then
                 Actors:remove_actor(self)
             end
         end,
         draw = function(self)
             if self.timer<0 then
-                local a=self.timer*-2
-                if a>1 then
-                    a=2-a
-                end
                 fillp(0b0101101001011010.11)
-                circfill(self.x*8,self.y*8,a*24,8)--10)
+                circfill(self.x*8,self.y*8,self:get_radius()*8,8)--*24,10)
                 --circfill(self.x*8,self.y*8,a*18,9)
                 --circfill(self.x*8,self.y*8,a*12,8)
                 --circfill(self.x*8,self.y*8,a*6,7)
                 fillp()
             else
-                if flr(self.timer*2%2)==1 then
-                    pal(3,8)
-                end
+                if (flr(self.timer*2%2)==1) pal(3,8)
                 self:draw_actor()
                 reset_pal()
             end
@@ -1177,28 +1180,23 @@ Map = {
         7=lava
     ]]--
 
-    hidden=split("1_10_7_4,53_27_4_5,55_39_7_4,37_58_11_5,43_33_5_5,42_38_4_3,48_59_4_2,48_61_7_3,16_86_4_4,27_86_5_4,26_75_6_5,53_70_11_6,58_75_6_5,58_80_6_16,58_96_6_2,59_96_5_4,60_100_4_5,48_96_11_4,48_88_4_3,52_88_2_2,51_124_4_4,56_124_4_4"), -- x_y_w_h, used to reduce tokens
-
-    screen_width=4,
-    screen_height=8,
-
-    visited=false,
-    visited_current_x=false,
-    visited_current_y=false,
-
     init=function(self)
-        reload()
-        if type(self.hidden[1])=="string" then
-            for k,i in pairs(self.hidden) do
-                i=split(i,"_",true)
-                self.hidden[k]={
-                    x=i[1],
-                    y=i[2],
-                    w=i[3],
-                    h=i[4]
-                }
-            end
+        self.hidden=split("1_10_7_4,53_27_4_5,55_39_7_4,37_58_11_5,43_33_5_5,42_38_4_3,48_59_4_2,48_61_7_3,16_86_4_4,27_86_5_4,26_75_6_5,53_70_11_6,58_75_6_5,58_80_6_16,58_96_6_2,59_96_5_4,60_100_4_5,48_96_11_4,48_88_4_3,52_88_2_2,51_124_4_4,56_124_4_4") -- x_y_w_h, used to reduce tokens
+        for k,i in pairs(self.hidden) do
+            i=split(i,"_",true)
+            self.hidden[k]={
+                x=i[1],
+                y=i[2],
+                w=i[3],
+                h=i[4]
+            }
         end
+
+        self.visited=false
+        self.visited_current_x=false
+        self.visited_current_y=false
+
+        reload()
     end,
     load=function(self)
         for y=0,128 do
@@ -1450,9 +1448,10 @@ function get_screen_position(p)
 end
 
 Screen = {
-    bubbles={},
-    bubbles_max=64,
     init=function(self)
+        self.bubbles={}
+        self.bubbles_max=64
+
         self.current_index=false
         self.current_position=false
         self.current_sfx=-1
@@ -1518,10 +1517,11 @@ Screen = {
     end,
     music=function(self,index)
         local selected=self:get_level(index)
-        if selected!=self.current_music then
-            music(selected)
-            self.current_music=selected
-        end
+        if (selected!=self.current_music) self:_music(selected)
+    end,
+    _music=function(self,song)
+        music(song,0,0b0111)
+        self.current_music=song
     end,
     draw_bg=function(self,index)
         local l=self:get_level(index)
@@ -1592,39 +1592,32 @@ Screen = {
 }
 
 Dialog = {
-    active_key=false,
-    active_index=false,
-    events=split("
-        artifact#you've found_a mysterious_artifact...~what do you do now?#reward~chest~unknown,
-        cord#some extra breathing tube!_this will come in handy...~maybe i should delve deeper?#reward~chest~cord,
-        key#a mysterious key!_there should be a door_around here that fits.#reward~chest~key,
-        harpoon#sweet!_now i can_defend myself~there are only_5 harpoons_in this chest~looks like_i have to_be stingy#reward~chest~harpoon,
-        bomb#finally!_now i can do_some real damage~or maybe_there's a way_deeper?#reward~chest~bomb,
-        dagger#a dagger?!_what is this doing_here?~looks aged_and blunt with_weird markings.~well maybe it_still has some_use left.#reward~chest~dagger,
-        envirosuit#oooh a fancy_new diving_suit!~the fibers seem_incredibly durable.~who made this?#reward~item~suit,
-        entrance#this cave_looks strange.~almost as if_it were_designed?#screen~16,
-        enterbase#what is this?_it must be...~some kind of_facility?#screen~27,
-        escape#let's get_out of here!~quick!_get in the ship.#screenchange~28~29"),
     init=function(self)
+        self.events=split("
+            artifact#you've found_a mysterious_artifact...~what do you do now?#reward~chest~unknown,
+            cord#some extra breathing tube!_this will come in handy...~maybe i should delve deeper?#reward~chest~cord,
+            key#a mysterious key!_there should be a door_around here that fits.#reward~chest~key,
+            harpoon#sweet!_now i can_defend myself~there are only_5 harpoons_in this chest~looks like_i have to_be stingy#reward~chest~harpoon,
+            bomb#finally!_now i can do_some real damage~or maybe_there's a way_deeper?#reward~chest~bomb,
+            dagger#a dagger?!_what is this doing_here?~looks aged_and blunt with_weird markings.~well maybe it_still has some_use left.#reward~chest~dagger,
+            envirosuit#oooh a fancy_new diving_suit!~the fibers seem_incredibly durable.~who made this?#reward~item~suit,
+            entrance#this cave_looks strange.~almost as if_it were_designed?#screen~16,
+            enterbase#what is this?_it must be...~some kind of_facility?#screen~27,
+            escape#let's get_out of here!~quick!_get in the ship.#screenchange~28~29")
+        for k,e in pairs(self.events) do
+            e=split(e,"#")
+            self.events[k]={
+                name=e[1],
+                text=split(e[2],"~"),
+                trigger=e[3],
+                activated=false,
+                completed=false,
+                line=1
+            }
+        end
+
         self.active_key=false
         self.active_index=false
-
-        if type(self.events[1])=="string" then
-            for k,e in pairs(self.events) do
-                e=split(e,"#")
-                self.events[k]={
-                    name=e[1],
-                    text=split(e[2],"~"),
-                    trigger=e[3]
-                }
-            end
-        end
-
-        for e in all(self.events) do
-            e.activated=false
-            e.completed=false
-            e.line=1
-        end
     end,
     check=function(self,trigger) -- trigger is sequence describing event as string, no split "a~b~c"
         if type(trigger)=="table" then
@@ -1672,7 +1665,7 @@ Dialog = {
             end
 
             local x=64-#text*2*s+s/2
-            local y=64-5*s/2
+            local y=64-s*2.5
 
             prints(text,x,y,s,s,14)
 
@@ -1680,20 +1673,16 @@ Dialog = {
                 --local k=(j-y)/(5*s+1)
 
                 local c=0
-                if j>=64 then
-                    c=8
-                end
+                if (j>=64) c=8
 
-                local m=flr(9-(j-64)/2)
-                if m<1 then
-                    m=1
-                end
+                local m=flr(j/2-23) --flr(9-(j-64)/2)
+                if (m<1) m=1
 
                 for i=x,x+#text*4*s do
                     local _c=pget(i,j)
                     if _c==14 then
                         if flr(flr(i)+flr(j)*m/2)%m==0 then
-                        pset(i,j,c)
+                            pset(i,j,c)
                         else
                             pset(i,j,0)
                         end
@@ -1735,30 +1724,30 @@ Dialog = {
     end
 }
 Shop = {
-    open=false,
-    areas=split("21_2_6_4_buy something_will ya?,33_82_4_3_security comp_access granted,38_99_4_3_core facility_access granted"), -- x_y_w_h_text1_text2
-    items=split("life_16,harpoon_5,bomb_5"),
-    key=nil,
     init=function(self)
-        if type(self.areas[1])=="string" then
-            for k,i in pairs(self.areas) do
-                i=split(i,"_",true)
-                self.areas[k]={
-                    x=i[1],
-                    y=i[2],
-                    w=i[3],
-                    h=i[4],
-                    text1=i[5],
-                    text2=i[6]
-                }
-            end
-            for k,i in pairs(self.items) do
-                i=split(i,"_")
-                self.items[k]={
-                    name=i[1],
-                    amount=tonum(i[2])
-                }
-            end
+        self.open=false
+        self.key=nil
+
+        self.areas=split("21_2_6_4_buy something_will ya?,33_82_4_3_security comp_access granted,38_99_4_3_core facility_access granted") -- x_y_w_h_text1_text2
+        for k,i in pairs(self.areas) do
+            i=split(i,"_",true)
+            self.areas[k]={
+                x=i[1],
+                y=i[2],
+                w=i[3],
+                h=i[4],
+                text1=i[5],
+                text2=i[6]
+            }
+        end
+
+        self.items=split("life_16,harpoon_5,bomb_5")
+        for k,i in pairs(self.items) do
+            i=split(i,"_")
+            self.items[k]={
+                name=i[1],
+                amount=tonum(i[2])
+            }
         end
     end,
     update=function(self)
@@ -1817,18 +1806,16 @@ Shop = {
     end
 }
 Inventory = {
-    open=false,
-    timer=0,
-    items=split("coin_43,life_46,cord_45,harpoon_44,bomb_40,key_85,dagger_77,unknown_56"), -- name_frame, used to reduce tokens
     init=function(self)
-        if type(self.items[1]) == "string" then
-            for k,i in pairs(self.items) do
-                i=split(i,"_")
-                self.items[k]={
-                    name=i[1],
-                    f=tonum(i[2])
-                }
-            end
+        self.open=false
+        self.timer=0
+        self.items=split("coin_43,life_46,cord_45,harpoon_44,bomb_40,key_85,dagger_77,unknown_56") -- name_frame, used to reduce tokens
+        for k,i in pairs(self.items) do
+            i=split(i,"_")
+            self.items[k]={
+                name=i[1],
+                f=tonum(i[2])
+            }
         end
         for i in all(self.items) do
             i.quantity=0
@@ -2133,7 +2120,9 @@ function dist2(x,y)
     return x*x+y*y
 end
 function dist(x,y)
-    return sqrt(dist2(x,y))
+    local d=dist2(x,y)
+    if (d<1) d=1
+    return sqrt(d)
 end
 function idist(x,y)
     return 1/dist(x,y)
