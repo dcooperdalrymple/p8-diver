@@ -7,10 +7,41 @@ function StateReset()
     Time=0
     Started=false
     Paused=false
+    Dead=false
+    DeadStarted=false
 end
 function StateUpdate()
-    if (not Started and btnp(4)) Started=true
+    if (not Started and btnp(5)) Started=true
+    if Dead and btnp(5) then
+        DeadStarted=true
+        Fade:out()
+    end
+    if DeadStarted and not Fade.state then
+        restart()
+    end
     if (not Started or not Paused) Time+=tdelta
+end
+
+function get_path_length(path) -- get length of list of points
+    local l=0
+    local _pt
+    for pt in all(path) do
+        if _pt then
+            l+=dist(_pt.x-pt.x,_pt.y-pt.y)
+        end
+        _pt=pt
+    end
+    return l
+end
+
+function draw_path(path,c)
+    local _pt
+    for pt in all(path) do
+        if _pt then
+            line(_pt.x*8,_pt.y*8,pt.x*8,pt.y*8,c)
+        end
+        _pt=pt
+    end
 end
 
 Path = {
@@ -32,17 +63,6 @@ Path = {
         end
 
         return path
-    end,
-    get_length=function(path) -- get length of list of points
-        local l=0
-        local _pt
-        for pt in all(path) do
-            if _pt then
-                l+=dist(_pt.x-pt.x,_pt.y-pt.y)
-            end
-            _pt=pt
-        end
-        return l
     end,
     cast=function(self,a,b,r) -- simple cast to find if solid is in path -- r=resolution
         self.ray_x=a.x
@@ -91,15 +111,6 @@ Path = {
         end
 
         return false
-    end,
-    draw=function(path,c)
-        local _pt
-        for pt in all(path) do
-            if _pt then
-                line(_pt.x*8,_pt.y*8,pt.x*8,pt.y*8,c)
-            end
-            _pt=pt
-        end
     end
 }
 
@@ -128,76 +139,55 @@ function draw_around(x,y,w,h,c) -- fills around around a rect
 end
 
 Fade = {
-    state="",
 
-    _in=function (self,color,ticks)
-        self:_init("in",color,ticks)
+    _in=function (self,ticks)
+        self:init("in",ticks)
     end,
 
-    out=function (self,color,ticks)
-        self:_init("out",color,ticks)
+    out=function (self,ticks)
+        self:init("out",ticks)
     end,
 
-    init=function (self)
-        self:_init("")
-    end,
-    _init=function (self,state,color,ticks)
-        color = color or 0
+    init=function (self,state,ticks)
         ticks = ticks or (1/tdelta)/30
 
         self.state=state
-        self.color=color
         self.index=17
         self.ticks=ticks
         self.tick=ticks
     end,
 
     update=function (self)
-        if (self.state=="") return
+        if self.state then
 
-        if self.state=="in" then
-            self._index=17-self.index
-        else
             self._index=self.index
-        end
-
-        self.tick-=1
-        if self.tick<=0 then
-            self.tick=self.ticks
-
-            self.index-=1
-            if self.index<0 then
-                self.state=""
+            if self.state=="in" then
+                self._index=18-self._index
             end
+
+            self.tick-=1
+            if self.tick<=0 then
+                self.tick=self.ticks
+
+                self.index-=1
+                if self.index<=0 then
+                    self.state=false
+                end
+            end
+
         end
     end,
 
     draw=function (self)
-        if (self.state=="") return
-        fillp(self.pat[self._index])
-        rectfill(0,0,127,127,self.color)
-        fillp()
+        if self.state then
+            fillp(tonum(self.pat[self._index]))
+            rectfill(0,0,127,127,0)
+            fillp()
+        end
     end,
 
-    pat={
-        0x0000.8,
-        0x8000.8,
-        0x8020.8,
-        0xa020.8,
-        0xa0a0.8,
-        0xa4a0.8,
-        0xa4a1.8,
-        0xa5a1.8,
-        0xa5a5.8,
-        0xe5a5.8,
-        0xe5b5.8,
-        0xf5b5.8,
-        0xf5f5.8,
-        0xfdf5.8,
-        0xfdf7.8,
-        0xfff7.8,
-        0xffff.8
-    },
+    pat=split("0x0000.8,0x8000.8,0x8020.8,0xa020.8,0xa0a0.8,0xa4a0.8,0xa4a1.8,0xa5a1.8,0xa5a5.8,0xe5a5.8,0xe5b5.8,0xf5b5.8,0xf5f5.8,0xfdf5.8,0xfdf7.8,0xfff7.8,0xffff.8")
+
 }
 
 -- Actors!
@@ -207,7 +197,7 @@ function Actor()
         self.x+=self.dx
         self.y+=self.dy
 
-        if self.a!=false and self.at+self.as<=Time then
+        if self.a and self.at+self.as<=Time then
             self.at=Time
             self.ai+=1
             if self.ai>count(self.a) then
@@ -236,9 +226,9 @@ function Actor()
     end
 
     return {
-        class="",
-        name="",
-        f=0,
+        --class="",
+        --name="",
+        --f=0,
         x=0,
         y=0,
         dx=0,
@@ -247,8 +237,8 @@ function Actor()
         h=1,
         s=1, -- scale
         center=true,
-        flx=false,
-        fly=false,
+        --flx=false,
+        --fly=false,
 
         init=function(self) end,
         reload=function(self) end,
@@ -257,8 +247,8 @@ function Actor()
         draw=draw,
         draw_actor=draw,
 
-        a=false, -- list of frames
-        as=1, -- animation speed (sec)
+        --a=false, -- list of frames
+        --as=1, -- animation speed (sec)
         at=Time, -- animation timer
         ai=1 -- animation index
     }
@@ -276,7 +266,7 @@ function ActorReward()
             return
         end
 
-        if self.activated or not collide(Player,self) then
+        if self.activated or Dead or not collide(Player,self) then
             self.collided=false
             return
         end
@@ -735,14 +725,14 @@ function ActorPlayer()
         update = function(self)
             self:update_actor()
 
-            if Started then
+            if Dead then
+                if self.dy!=0 and Map:is_solid(self.x,self.y+self.dy) then
+                    self.dy=0
+                end
+            elseif Started then
                 -- timers
-                if self.life_timer>0 then
-                    self.life_timer-=tdelta
-                end
-                if self.attack_timer>0 then
-                    self.attack_timer-=tdelta
-                end
+                if (self.life_timer>0) self.life_timer-=tdelta
+                if (self.attack_timer>0) self.attack_timer-=tdelta
                 if (self.attack_timer<0.125) self.dagger=false
 
                 -- player movement
@@ -847,7 +837,7 @@ function ActorPlayer()
 
             -- cord
             self.cord=Path:calc(self.cord,{x=Boat.x,y=Boat.y},{x=self.x,y=self.y})
-            Inventory:set_item("cord",Path.get_length(self.cord))
+            Inventory:set_item("cord",get_path_length(self.cord))
 
         end,
         draw = function(self)
@@ -856,13 +846,12 @@ function ActorPlayer()
                 if (self.flx) x-=24
                 spr(77,x,self.y*8-4,1,1,self.flx)
             end
-            if self.life_timer>0 and flr(self.life_timer/tdelta/4)%2==0 then
+            if Dead or (self.life_timer>0 and flr(self.life_timer/tdelta/4)%2==0) then
                 pal(palbw)
-                self:draw_actor()
-            else
-                if (self.suit) pal(4,3)
-                self:draw_actor()
+            elseif self.suit then
+                pal(4,3)
             end
+            self:draw_actor()
             reset_pal()
         end,
         collide = function(self,obj)
@@ -884,7 +873,14 @@ function ActorPlayer()
             local item=Inventory:get_item("life")
             item.quantity-=1
             if item.quantity==0 then
-                restart()
+                Dead=true
+                self.dy=0.02
+                self.dx=0
+                self.fly=true
+                self.a=false
+                self.f=16
+                music(5)
+                Screen.current_music=5
             end
         end
     }
@@ -1083,7 +1079,7 @@ Actors = {
         a._x=a.x
         a._y=a.y
         a.f=f
-        a.screen=Screen:get_index(a)
+        a.screen=get_screen_index(a)
         a.__x=a.x
         a.__y=a.y
         return a
@@ -1151,7 +1147,7 @@ Camera = {
         self.y=p.y
     end,
     set_screen_position=function(self,p)
-        p=Screen.get_position(p)
+        p=get_screen_position(p)
         p.x*=8
         p.y*=8
         self:set_position(p)
@@ -1341,21 +1337,21 @@ Map = {
     end,
     get_pos=function(self,p)
         p=p or Screen.current_position
-        local _p=Screen.get_position(p)
+        local _p=get_screen_position(p)
 
-        i=Screen:get_index(_p)
+        i=get_screen_index(_p)
         if i>=16 then
-            _p.x+=16*4
-            _p.y-=16*4
+            _p.x+=64
+            _p.y-=64
         end
 
         return _p
     end,
     get_tile_pos=function(self,p)
-        i=Screen:get_index(p)
+        i=get_screen_index(p)
         if i>=16 then
-            p.x+=16*4
-            p.y-=16*4
+            p.x+=64
+            p.y-=64
         end
         return p
     end,
@@ -1395,7 +1391,7 @@ Clouds = {
     clouds={},
     clouds_max=16,
     update=function(self)
-        if (Screen:get_index(Player)>=4) return
+        if (get_screen_index(Player)>=4) return
 
         for c in all(self.clouds) do
             c.x+=c.dx
@@ -1442,6 +1438,17 @@ Clouds = {
     end
 }
 ]]--
+
+function get_screen_index(p)
+    return flr(p.y/16)*4+flr(p.x/16)
+end
+function get_screen_position(p)
+    return {
+        x=flr(p.x/16)*16,
+        y=flr(p.y/16)*16
+    }
+end
+
 Screen = {
     bubbles={},
     bubbles_max=64,
@@ -1453,7 +1460,7 @@ Screen = {
         self.sfx_timer=0
     end,
     update=function(self)
-        if not self.current_index or self:get_index(Player)!=self.current_index then
+        if not self.current_index or get_screen_index(Player)!=self.current_index then
             self:change()
         end
         if self.sfx_timer>0 then
@@ -1466,8 +1473,8 @@ Screen = {
     change=function(self)
         local d={"screenchange",self.current_index}
 
-        self.current_index=self:get_index(Player)
-        self.current_position=self.get_position(Player)
+        self.current_index=get_screen_index(Player)
+        self.current_position=get_screen_position(Player)
 
         add(d,self.current_index)
         Dialog:check(d)
@@ -1478,25 +1485,16 @@ Screen = {
 
         Actors:reload(self.current_index)
     end,
-    get_index=function(self,p)
-        return flr(p.y/16)*4+flr(p.x/16)
-    end,
-    get_position=function(p)
-        return {
-            x=flr(p.x/16)*16,
-            y=flr(p.y/16)*16
-        }
-    end,
     in_screen=function(self,p,index)
         index=index or self.current_index
-        return index==self:get_index(p)
+        return index==get_screen_index(p)
     end,
     same=function(self,a,b,index)
         index=index or self.current_index
         return self:in_screen(a,index) and self:in_screen(b,index)
     end,
     get_level=function(self,index)
-        index=index or self:get_index(Player)
+        index=index or get_screen_index(Player)
         local l=flr(index/8)
         if index==4 then
             l=1
@@ -1534,14 +1532,18 @@ Screen = {
             bgc=0
             fgc=5
             buc=6
+        elseif Dead then
+            bgc=5
+            --fgc=0
+            --buc=0
         elseif l==0 then
             bgc=1
             fgc=2
             buc=12
         elseif l==1 then
             bgc=2
-            fgc=0
-            buc=0
+            --fgc=0
+            --buc=0
         elseif l==2 then
             bgc=0
             fgc=8
@@ -1658,53 +1660,59 @@ Dialog = {
     end,
     draw=function(self)
 
+        --local text
+
         -- start controls
-        if Screen.current_index==1 then
-            if not Started then
-                local text="diver"
-                local s=4+sin(Time/4)*2+0.5
-                local x=64-#text*2*s+s/2
-                local y=64-5*s/2
+        if not Started or Dead then
+            text="diver"
+            local s=4.5+sin(Time/4)*2
+            if Dead then
+                text="you perished"
+                s/=3
+            end
 
-                prints(text,x,y,s,s,14)
+            local x=64-#text*2*s+s/2
+            local y=64-5*s/2
 
-                for j=y,y+5*s+1 do
-                    --local k=(j-y)/(5*s+1)
+            prints(text,x,y,s,s,14)
 
-                    local c=0
-                    if j>=64 then
-                        c=8
-                    end
+            for j=y,y+5*s+1 do
+                --local k=(j-y)/(5*s+1)
 
-                    local m=flr(9-(j-64)/2)
-                    if m<1 then
-                        m=1
-                    end
+                local c=0
+                if j>=64 then
+                    c=8
+                end
 
-                    for i=x,x+#text*4*s do
-                        local _c=pget(i,j)
-                        if _c==14 then
-                            if flr(flr(i)+flr(j)*m/2)%m==0 then
-                            pset(i,j,c)
-                            else
-                                pset(i,j,0)
-                            end
+                local m=flr(9-(j-64)/2)
+                if m<1 then
+                    m=1
+                end
+
+                for i=x,x+#text*4*s do
+                    local _c=pget(i,j)
+                    if _c==14 then
+                        if flr(flr(i)+flr(j)*m/2)%m==0 then
+                        pset(i,j,c)
+                        else
+                            pset(i,j,0)
                         end
                     end
                 end
-
-                text="press \142 to start"
-                printo(text,64-#text*2,86)
-            else
-                printo("swim:\139\148\131\145",2,11)
-                printo("use/select:\142",2,17)
-                printo("inv/shop:\151",2,23)
             end
+
+            text="press \151 to start"
+            if (Dead) text="press \151 to try again"
+            printo(text,64-#text*2,86)
+        elseif Screen.current_index==1 then
+            printo("swim:\139\148\131\145",2,11)
+            printo("use/select:\142",2,17)
+            printo("inv/shop:\151",2,23)
         end
 
         if self.active_key then
             local e=self.events[self.active_key]
-            local text=e.text[e.line]
+            text=e.text[e.line]
             local lines=split(text,"_")
             local len=0
             for l in all(lines) do
@@ -1770,7 +1778,7 @@ Shop = {
                 self.key,self.item=next(self.items,self.key)
                 if (self.key==nil or self.can_buy(self.item.name)) break
             end
-        elseif not Paused and btnp(5) then
+        elseif not Paused and not Dead and btnp(5) then
             for area in all(self.areas) do
                 if collide(Player,area) then
                     self.area=area
@@ -1811,7 +1819,6 @@ Shop = {
 Inventory = {
     open=false,
     timer=0,
-    timer_max=0.25,
     items=split("coin_43,life_46,cord_45,harpoon_44,bomb_40,key_85,dagger_77,unknown_56"), -- name_frame, used to reduce tokens
     init=function(self)
         if type(self.items[1]) == "string" then
@@ -1838,14 +1845,14 @@ Inventory = {
         self.equipped_key=nil
     end,
     update=function(self)
-        if (Dialog.active_key or Shop.open or Shop._open) return
+        if (Dialog.active_key or Shop.open or Shop._open or Dead) return
 
         if btnp(5) then
             self.open=not self.open
             Paused=self.open
         end
 
-        if self.open and self.timer<self.timer_max then
+        if self.open and self.timer<0.25 then
             -- animation timer
             self.timer+=tdelta
         elseif not self.open and self.timer>0 then
@@ -1888,7 +1895,7 @@ Inventory = {
 
         -- Inventory Selector
         if self.timer>0 then
-            local a=min(self.timer/self.timer_max,1)
+            local a=min(self.timer/0.25,1)
             circfill(Player.x*8-Camera.x,Player.y*8-Camera.y,a*14,11)
             circfill(Player.x*8-Camera.x,Player.y*8-Camera.y,a*10,3)
 
@@ -1961,12 +1968,11 @@ Inventory = {
 function _init()
     restart()
     menuitem(1,"restart",restart)
-    Fade:init()
 end
 
 function restart()
-    --cls()
-    --reload()
+    Boat=false
+    Player=false
 
     reset_pal()
     StateReset()
@@ -1981,22 +1987,10 @@ function restart()
     Map:load()
     Actors:load() -- must be run after Map:load() for actors to be created
 
-    --[[ Dev Mode
-    Player.suit=true
-    Player.x=8
-    Player.y=120
-    --Player.speed=0.33
-    Inventory:add_item("cord",512,true)
-    --[
-    Inventory:add_item("life",7,true)
-    Inventory:add_item("harpoon",99,true)
-    Inventory:add_item("bomb",99,true)
-    Inventory:add_item("dagger",1,true)
-    Inventory:add_item("key",99,true)
-    --]]
-
     Screen:update()
     Camera:set_screen_position(Player)
+
+    Fade:_in()
 end
 
 function _update()
@@ -2020,7 +2014,7 @@ function _update()
 end
 
 function _draw()
-    if Paused then
+    if Paused or Dead then
         pal(palbw)
     end
 
@@ -2043,13 +2037,13 @@ function _draw()
     elseif l==1 then
         c=1
     end
-    Path.draw(Player.cord,c)
+    draw_path(Player.cord,c)
 
     Actors:draw()
 
     Map:draw_hidden()
 
-    if Paused then
+    if Paused or Dead then
         reset_pal(true)
     end
 
@@ -2066,8 +2060,8 @@ function _draw()
 
     camera()
     Shop:draw()
-    Fade:draw()
     Dialog:draw()
+    Fade:draw()
 end
 
 -- Global Functions
