@@ -1,13 +1,20 @@
 NAME   = diver
-LUA    = ?;?.lua;./src/?.lua;./src/graphics/?.lua;./src/actor/?.lua;./src/actor/enemies/?.lua;./src/actor/projectiles/?.lua;./src/actor/rewards/?.lua;./src/hud/?.lua
+LUA    = ?;?.lua
 ASSETS = assets.p8
 
-all: $(NAME).p8
+all: clean $(NAME).p8 $(NAME)-manual.p8
 
-$(NAME).p8: clean build format
+manual: $(NAME)-manual.p8
+
+$(NAME).p8: build format
+
+$(NAME)-manual.p8: manual-build
 
 build:
 	p8tool build $(NAME).p8 --lua main.lua --lua-path="$(LUA)" --gfx $(ASSETS) --gff $(ASSETS) --map $(ASSETS) --sfx $(ASSETS) --music $(ASSETS)
+
+manual-build:
+	p8tool build $(NAME)-manual.p8 --lua manual.lua --lua-path="$(LUA)" --gfx $(ASSETS) --gff $(ASSETS) --map $(ASSETS) --sfx $(ASSETS) --music $(ASSETS)
 
 format:
 	p8tool luafmt --indentwidth=1 $(NAME).p8
@@ -23,8 +30,12 @@ stats:
 test:
 	pico8 -run $(NAME).p8
 
+manual-test:
+	pico8 -run $(NAME)-manual.p8
+
 assets:
 	pico8 assets.p8
 
 clean:
 	rm $(NAME).p8 || true
+	rm $(NAME)-manual.p8 || true
