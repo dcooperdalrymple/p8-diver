@@ -3,17 +3,15 @@
 
 tdelta=1/30 --1/60
 
-State = {
-    reset=function (self)
-        Time=0
-        Started=false
-        Paused=false
-    end,
-    update=function (self)
-        if (not Started and btnp(4)) Started=true
-        if (not Started or not Paused) Time+=tdelta
-    end
-}
+function StateReset()
+    Time=0
+    Started=false
+    Paused=false
+end
+function StateUpdate()
+    if (not Started and btnp(4)) Started=true
+    if (not Started or not Paused) Time+=tdelta
+end
 
 Path = {
     calc=function(self,path,start,goal)
@@ -35,7 +33,7 @@ Path = {
 
         return path
     end,
-    get_length=function(self,path) -- get length of list of points
+    get_length=function(path) -- get length of list of points
         local l=0
         local _pt
         for pt in all(path) do
@@ -94,7 +92,7 @@ Path = {
 
         return false
     end,
-    draw=function(self,path,c)
+    draw=function(path,c)
         local _pt
         for pt in all(path) do
             if _pt then
@@ -105,33 +103,30 @@ Path = {
     end
 }
 
-Graphics = {
-    palbw=split("0,5,5,5,5,6,7,6,6,7,7,6,6,6,7,0"),
-    reset_pal=function(force)
-        if (Paused and force!=true) return
-        pal()
-        palt(14, true)
-        palt(0, false)
-    end,
-    draw_around=function(x,y,w,h,c) -- fills around around a rect
-        c=c or 0
-        if y>0 then -- top
-            rectfill(0,0,128*8,y-1,0)
-        end
-        if y<128*8-h then -- bottom
-            rectfill(0,y+w,128*8,128*8,0)
-        end
-        if x>0 then -- left
-            rectfill(0,0,x-1,128*8,0)
-        end
-        if x<128*8-w then -- right
-            rectfill(x+w,128*8,128*8,0)
-        end
-    end,
-    reset=function(self)
-        self.reset_pal()
+-- Graphics
+palbw=split("0,5,5,5,5,6,7,6,6,7,7,6,6,6,7,0")
+function reset_pal(force)
+    if (Paused and force!=true) return
+    pal()
+    palt(14, true)
+    palt(0, false)
+end
+function draw_around(x,y,w,h,c) -- fills around around a rect
+    c=c or 0
+    if y>0 then -- top
+        rectfill(0,0,128*8,y-1,0)
     end
-}
+    if y<128*8-h then -- bottom
+        rectfill(0,y+w,128*8,128*8,0)
+    end
+    if x>0 then -- left
+        rectfill(0,0,x-1,128*8,0)
+    end
+    if x<128*8-w then -- right
+        rectfill(x+w,128*8,128*8,0)
+    end
+end
+
 Fade = {
     state="",
 
@@ -207,9 +202,6 @@ Fade = {
 
 -- Actors!
 
-Player = false
-Boat = false
-
 function Actor()
     local function update(self)
         self.x+=self.dx
@@ -259,6 +251,7 @@ function Actor()
         fly=false,
 
         init=function(self) end,
+        reload=function(self) end,
         update=update,
         update_actor=update,
         draw=draw,
@@ -450,15 +443,23 @@ function ActorEnemy()
         if self.life>0 then
             self:draw_actor()
         else
-            pal(Graphics.palbw)
+            pal(palbw)
             self:draw_actor()
-            Graphics.reset_pal()
+            reset_pal()
         end
     end
 
     return {
         class="enemy",
         life=1,
+        reload = function(self,index)
+            if self.screen==index and self.life>0 then
+                self._x=self.__x
+                self._y=self.__y
+                self.x=self.__x
+                self.y=self.__y
+            end
+        end,
         update = update,
         update_enemy = update,
         damage = function(self,dmg)
@@ -486,15 +487,15 @@ function ActorEnemyFish()
         update=function(self)
             self:update_enemy()
 
-            if (self.life<=0) return
+            if self.life>0 then
+                -- move left to right
+                self.dx=self.speed*self.dir
 
-            -- move left to right
-            self.dx=self.speed*self.dir
-
-            local adjx=self.x+self.dir
-            if Map:is_solid(adjx,self.y) or adjx<flr(self.x/16)*16+1 or adjx>flr(self.x/16+1)*16-1 then
-                self.dir*=-1
-                self.flx=self.dir<0
+                local adjx=self.x+self.dir
+                if Map:is_solid(adjx,self.y) or adjx<flr(self.x/16)*16+1 or adjx>flr(self.x/16+1)*16-1 then
+                    self.dir*=-1
+                    self.flx=self.dir<0
+                end
             end
         end
     }
@@ -509,19 +510,19 @@ function ActorEnemyUrchin()
         update=function(self)
             self:update_enemy()
 
-            if (self.life<=0) return
+            if self.life>0 then
+                -- Still use movement
+                self._y+=self.dy
+                self._x+=self.dx
+                if self.dy!=0 and Map:is_solid(self._x,self._y) then
+                    self.dx=0
+                    self.dy=0
+                end
 
-            -- Still use movement
-            self._y+=self.dy
-            self._x+=self.dx
-            if self.dy!=0 and Map:is_solid(self._x,self._y) then
-                self.dx=0
-                self.dy=0
+                -- bob around
+                self.y=self._y+sin(Time/4+self.seed)*0.125+0.0625
+                self.x=self._x+cos(Time/4+self.seed)*0.125+0.0625
             end
-
-            -- bob around
-            self.y=self._y+sin(Time/4+self.seed)*0.125+0.0625
-            self.x=self._x+cos(Time/4+self.seed)*0.125+0.0625
         end,
         life=1
     }
@@ -541,28 +542,27 @@ function ActorEnemySquid()
                     self.rewarded=true
                     Actors:create_reward(85,self.x,self.y,ActorRewardItem()):set_reward() -- key
                 end
-                return
-            end
+            else
+                -- bob vertically
+                self.y=self._y+sin(Time/4+self.seed)*2+0.0625
 
-            -- bob vertically
-            self.y=self._y+sin(Time/4+self.seed)*2+0.0625
-
-            -- shoot (boss only)
-            if self.s>1 and Screen:same(self,Player) and not Path:cast(self,Player) then
-                self.timer-=tdelta
-                if self.timer<=0 then
-                    self.timer=3+rnd(2)
-                    local a=Actors:create_enemy(39,self.x,self.y,ActorEnemyUrchin())
-                    follow_target(a,Player,0.1)
+                -- shoot (boss only)
+                if self.s>1 and Screen:same(self,Player) and not Path:cast(self,Player) then
+                    self.timer-=tdelta
+                    if self.timer<=0 then
+                        self.timer=3+rnd(2)
+                        local a=Actors:create_enemy(39,self.x,self.y,ActorEnemyUrchin())
+                        follow_target(a,Player,0.1)
+                    end
                 end
             end
         end,
         draw=function(self)
-            if not self.__y then
-                self.__y=self.y
+            if not self.___y then
+                self.___y=self.y
             end
 
-            if self.life<=0 or self.y-self.__y>0 then -- moving down
+            if self.life<=0 or self.y-self.___y>0 then -- moving down
                 self:draw_enemy()
             else -- moving up
                 self.draw_actor({
@@ -591,10 +591,10 @@ function ActorEnemySquid()
                 })
             end
 
-            self.__y=self.y
+            self.___y=self.y
         end,
         life=2,
-        timer=5
+        timer=4
     }
 end
 function ActorEnemyAngler()
@@ -609,22 +609,21 @@ function ActorEnemyAngler()
         update=function(self)
             self:update_enemy()
 
-            if (self.life<=0) return
+            if self.life>0 then
+                -- fix oscillation & dy
+                --self.y-=self.dy
+                self._y+=self.dy
 
-            -- fix oscillation & dy
-            self.y-=self.dy
-            self._y+=self.dy
+                -- bob vertically
+                self.y=self._y+sin(Time/2+self.seed)*0.25+0.0625
 
-            -- bob vertically
-            self.y=self._y+sin(Time/2+self.seed)*0.25+0.0625
-
-            -- follow player
-            if Screen:same(self,Player) and not Path:cast(self,Player) then
-                follow_target(self,Player,0.0625)
-                self.flx=self.dx<0
-            else
+                -- follow player
                 self.dx=0
                 self.dy=0
+                if Screen:same(self,Player) and not Path:cast(self,Player) then
+                    follow_target(self,Player,0.0625)
+                    self.flx=self.dx<0
+                end
             end
         end
     }
@@ -652,38 +651,37 @@ function ActorEnemyAlien()
                 end
             end
 
-            if (self.life<=0) return
-
-            if Screen:same(self,Player) and not Path:cast(self,Player) then
-                follow_target(self,Player,0.015625)
-                self.dy=0
-
-                if self.dx!=0 then
-                    self.flx_timer-=tdelta
-                    if self.flx_timer<0 then
-                        self.flx=not self.flx
-                        self.flx_timer=0.25
-                    end
-                end
-
-                self.fire_timer-=tdelta
-                if self.fire_timer<0 then
-                    if self.s>1 then
-                        self.fire_timer=rnd(1)+0.5
-                    else
-                        self.fire_timer=rnd(2)+1
-                    end
-                    local a={
-                        w=0.25,
-                        h=0.25,
-                        x=self.x,
-                        y=self.y
-                    }
-                    follow_target(a,Player,0.25)
-                    add(self.shots,a)
-                end
-            else
+            if self.life>0 then
                 self.dx=0
+                if Screen:same(self,Player) and not Path:cast(self,Player) then
+                    follow_target(self,Player,0.015625)
+                    self.dy=0
+
+                    if self.dx!=0 then
+                        self.flx_timer-=tdelta
+                        if self.flx_timer<0 then
+                            self.flx=not self.flx
+                            self.flx_timer=0.25
+                        end
+                    end
+
+                    self.fire_timer-=tdelta
+                    if self.fire_timer<0 then
+                        if self.s>1 then
+                            self.fire_timer=rnd(1)+0.5
+                        else
+                            self.fire_timer=rnd(2)+1
+                        end
+                        local a={
+                            w=0.25,
+                            h=0.25,
+                            x=self.x,
+                            y=self.y
+                        }
+                        follow_target(a,Player,0.25)
+                        add(self.shots,a)
+                    end
+                end
             end
         end,
         draw=function(self)
@@ -717,7 +715,7 @@ function ActorPlayer()
         name="player",
         f=16,
         w=2,
-        h=1.25,
+        h=1.5,
         speed=0.125,
 
         doors=split("106_2_2_0_0,107_2_2_-1_0,123_2_2_-1_-1,122_2_2_0_-1,68_1_2_0_0,84_1_2_0_-1"), -- f_w_h_dx_dy
@@ -737,111 +735,109 @@ function ActorPlayer()
         update = function(self)
             self:update_actor()
 
-            if not Started then
-                return
-            end
+            if Started then
+                -- timers
+                if self.life_timer>0 then
+                    self.life_timer-=tdelta
+                end
+                if self.attack_timer>0 then
+                    self.attack_timer-=tdelta
+                end
+                if (self.attack_timer<0.125) self.dagger=false
 
-            -- timers
-            if self.life_timer>0 then
-                self.life_timer-=tdelta
-            end
-            if self.attack_timer>0 then
-                self.attack_timer-=tdelta
-            end
-            if (self.attack_timer<0.125) self.dagger=false
+                -- player movement
+                self.dx=0
+                self.dy=0
+                local sp=self.speed
+                local item=Inventory:get_item("cord")
+                if (item.quantity>=item.max) sp*=0.1
+                if btn(0) then
+                    self.flx=true
+                elseif btn(1) then
+                    self.flx=false
+                end
+                if btn(0) and not Map:is_solid(self.x-1,self.y) then
+                    self.dx=-sp
+                end
+                if btn(1) and not Map:is_solid(self.x+0.875,self.y) then
+                    self.dx=sp
+                end
+                if btn(2) and not Map:is_solid(self.x,self.y-0.625) then
+                    self.dy=-sp
+                end
+                if btn(3) and not Map:is_solid(self.x,self.y+0.5) then
+                    self.dy=sp
+                end
 
-            -- player movement
-            self.dx=0
-            self.dy=0
-            local sp=self.speed
-            local item=Inventory:get_item("cord")
-            if (item.quantity>=item.max) sp*=0.1
-            if btn(0) then
-                self.flx=true
-            elseif btn(1) then
-                self.flx=false
-            end
-            if btn(0) and not Map:is_solid(self.x-1,self.y) then
-                self.dx=-sp
-            end
-            if btn(1) and not Map:is_solid(self.x+0.875,self.y) then
-                self.dx=sp
-            end
-            if btn(2) and not Map:is_solid(self.x,self.y-0.625) then
-                self.dy=-sp
-            end
-            if btn(3) and not Map:is_solid(self.x,self.y+0.5) then
-                self.dy=sp
-            end
+                if self.dx!=0 or self.dy!=0 then
+                    self.a={16,103}
+                    self.as=0.25
+                else
+                    self.f=16
+                    self.a=false
+                end
 
-            if self.dx!=0 or self.dy!=0 then
-                self.a={16,103}
-                self.as=0.25
-            else
-                self.f=16
-                self.a=false
-            end
+                -- enviro suit
+                if not self.suit and Map:is_lava(self.x,self.y) then
+                    self:damage()
+                end
 
-            -- enviro suit
-            if not self.suit and Map:is_lava(self.x,self.y) then
-                self:damage()
-            end
+                if btnp(4) then
+                    item=Inventory.equipped_item
+                    if item==nil or item.quantity<=0 then
+                        Screen:play_sfx(9)
+                    elseif in_table(item.name,split("harpoon,bomb")) then
+                        if self.attack_timer<=0 then
+                            self.attack_timer=0.25
+                            Inventory:remove_item(item)
 
-            if btnp(4) then
-                item=Inventory.equipped_item
-                if item==nil or item.quantity<=0 then
-                    Screen:play_sfx(9)
-                elseif in_table(item.name,split("harpoon,bomb")) then
-                    if self.attack_timer<=0 then
-                        self.attack_timer=0.25
-                        Inventory:remove_item(item)
-
-                        local a
-                        if item.name=="harpoon" then
-                            a=Actors:create_projectile(ActorProjectileHarpoon(),self.x,self.y,-1,-0.375)
+                            local a
+                            if item.name=="harpoon" then
+                                a=Actors:create_projectile(ActorProjectileHarpoon(),self.x,self.y,-1,-0.375)
+                            else
+                                a=Actors:create_projectile(ActorProjectileBomb(),self.x,self.y,0.75,-0.625)
+                                if self.flx then
+                                    a.x-=2.375
+                                end
+                            end
+                            a.flx=self.flx
+                            a:init()
                         else
-                            a=Actors:create_projectile(ActorProjectileBomb(),self.x,self.y,0.75,-0.625)
-                            if self.flx then
-                                a.x-=2.375
-                            end
+                            Screen:play_sfx(9)
                         end
-                        a.flx=self.flx
-                        a:init()
-                    else
-                        Screen:play_sfx(9)
-                    end
-                elseif item.name=="dagger" then
-                    if self.attack_timer<=0 then
-                        self.attack_timer=0.25
+                    elseif item.name=="dagger" then
+                        if self.attack_timer<=0 then
+                            self.attack_timer=0.25
 
-                        for a in all(Actors.actors) do
-                            local p={
-                                x=self.x+1.5,
-                                y=self.y
-                            }
-                            if (a.flx) p.x-=3
-                            if a.name=="urchin" and a.life>0 and in_radius(p,a,1) then
-                                a:damage(self.dmg)
-                                Screen:play_sfx(2)
-                                self.dagger=true
-                                break
+                            for a in all(Actors.actors) do
+                                local p={
+                                    x=self.x+1.5,
+                                    y=self.y
+                                }
+                                if (self.flx) p.x-=3
+                                if a.name=="urchin" and a.life>0 and in_radius(p,a,1) then
+                                    a:damage(self.dmg)
+                                    Screen:play_sfx(2)
+                                    self.dagger=true
+                                    break
+                                end
                             end
+                            if (not self.dagger) Screen:play_sfx(11)
+                            self.dagger=true
+                        else
+                            Screen:play_sfx(9)
                         end
-                        if (not self.dagger) Screen:play_sfx(11)
-                        self.dagger=true
-                    else
-                        Screen:play_sfx(9)
-                    end
-                elseif item.name=="key" then
-                    for y=self.y-1,self.y+1 do
-                        for x=self.x-1,self.x+1 do
-                            for a in all(self.doors) do
-                                if Map:mget(x,y)==a[1] then
-                                    x+=a[4]
-                                    y+=a[5]
-                                    Map:mclear(x,y,a[2],a[3])
-                                    Inventory:remove_item(item)
-                                    Screen:play_sfx(19,1.5)
+                    elseif item.name=="key" then
+                        for y=self.y-1,self.y+1 do
+                            for x=self.x-1,self.x+1 do
+                                for a in all(self.doors) do
+                                    if Map:mget(x,y)==a[1] then
+                                        x+=a[4]
+                                        y+=a[5]
+                                        Map:mclear(x,y,a[2],a[3])
+                                        Inventory:remove_item(item)
+                                        Screen:play_sfx(19,1.5)
+                                    end
                                 end
                             end
                         end
@@ -851,7 +847,7 @@ function ActorPlayer()
 
             -- cord
             self.cord=Path:calc(self.cord,{x=Boat.x,y=Boat.y},{x=self.x,y=self.y})
-            Inventory:set_item("cord",Path:get_length(self.cord))
+            Inventory:set_item("cord",Path.get_length(self.cord))
 
         end,
         draw = function(self)
@@ -861,32 +857,33 @@ function ActorPlayer()
                 spr(77,x,self.y*8-4,1,1,self.flx)
             end
             if self.life_timer>0 and flr(self.life_timer/tdelta/4)%2==0 then
-                pal(Graphics.palbw)
+                pal(palbw)
                 self:draw_actor()
             else
                 if (self.suit) pal(4,3)
                 self:draw_actor()
             end
-            Graphics.reset_pal()
+            reset_pal()
         end,
         collide = function(self,obj)
             return collide({
                 center=true,
                 x=self.x,
-                y=self.y,
+                y=self.y-0.25,
                 w=1.5,
                 h=0.75
             },obj)
         end,
         damage = function(self,obj)
-            if (self.life_timer>0) return
-            if (obj and not self:collide(obj)) return
+            if (self.life_timer>0 or (obj and not self:collide(obj))) return
 
             self.life_timer=2 -- timer for invincibility
             Screen:play_sfx(10,0.2)
 
             -- take damage
-            if not Inventory:remove_item("life") then
+            local item=Inventory:get_item("life")
+            item.quantity-=1
+            if item.quantity==0 then
                 restart()
             end
         end
@@ -1025,7 +1022,7 @@ function ActorProjectileBomb()
                     pal(3,8)
                 end
                 self:draw_actor()
-                Graphics:reset_pal()
+                reset_pal()
             end
         end
     }
@@ -1037,6 +1034,9 @@ Actors = {
     end,
     load = function(self) -- actually init actors
         foreach(self.actors, function(obj) obj:init() end)
+    end,
+    reload = function(self,index) -- update on screen change
+        foreach(self.actors, function (obj) obj:reload(index) end)
     end,
     update = function(self)
         foreach(self.actors, function(obj) obj:update() end)
@@ -1083,6 +1083,9 @@ Actors = {
         a._x=a.x
         a._y=a.y
         a.f=f
+        a.screen=Screen:get_index(a)
+        a.__x=a.x
+        a.__y=a.y
         return a
     end,
 
@@ -1472,6 +1475,8 @@ Screen = {
 
         self:music()
         self:sfx()
+
+        Actors:reload(self.current_index)
     end,
     get_index=function(self,p)
         return flr(p.y/16)*4+flr(p.x/16)
@@ -1593,8 +1598,8 @@ Dialog = {
         key#a mysterious key!_there should be a door_around here that fits.#reward~chest~key,
         harpoon#sweet!_now i can_defend myself~there are only_5 harpoons_in this chest~looks like_i have to_be stingy#reward~chest~harpoon,
         bomb#finally!_now i can do_some real damage~or maybe_there's a way_deeper?#reward~chest~bomb,
-        dagger#a dagger?!_what is this doing_here?~looks aged_and blunt with_weird markings.~well maybe it_still has some use_left.#reward~chest~dagger,
-        envirosuit#oooh a fancy_new diving_suit!~the fibers seem_incredibly durable.~who made_this?#reward~item~suit,
+        dagger#a dagger?!_what is this doing_here?~looks aged_and blunt with_weird markings.~well maybe it_still has some_use left.#reward~chest~dagger,
+        envirosuit#oooh a fancy_new diving_suit!~the fibers seem_incredibly durable.~who made this?#reward~item~suit,
         entrance#this cave_looks strange.~almost as if_it were_designed?#screen~16,
         enterbase#what is this?_it must be...~some kind of_facility?#screen~27,
         escape#let's get_out of here!~quick!_get in the ship.#screenchange~28~29"),
@@ -1697,30 +1702,28 @@ Dialog = {
             end
         end
 
-        if not self.active_key then
-            return
-        end
-
-        local e=self.events[self.active_key]
-        local text=e.text[e.line]
-        local lines=split(text,"_")
-        local len=0
-        for l in all(lines) do
-            if #l>len then
-                len=#l
+        if self.active_key then
+            local e=self.events[self.active_key]
+            local text=e.text[e.line]
+            local lines=split(text,"_")
+            local len=0
+            for l in all(lines) do
+                if #l>len then
+                    len=#l
+                end
             end
+            local x=60-len*2
+            local y=58-#lines*3
+            local w=len*4+6
+            local h=#lines*6+14
+            rectfill(x,y,x+w,y+h,1)
+            rect(x,y,x+w,y+h,7)
+            for l in all(lines) do
+                print(l,x+4,y+4,7)
+                y+=6
+            end
+            print("press \151",27+w/2,y+6,6)
         end
-        local x=60-len*2
-        local y=58-#lines*3
-        local w=len*4+6
-        local h=#lines*6+14
-        rectfill(x,y,x+w,y+h,1)
-        rect(x,y,x+w,y+h,7)
-        for l in all(lines) do
-            print(l,x+4,y+4,7)
-            y+=6
-        end
-        print("press \151",27+w/2,y+6,6)
     end
 }
 Shop = {
@@ -1767,9 +1770,7 @@ Shop = {
                 self.key,self.item=next(self.items,self.key)
                 if (self.key==nil or self.can_buy(self.item.name)) break
             end
-        elseif Paused then
-            return
-        elseif btnp(5) then
+        elseif not Paused and btnp(5) then
             for area in all(self.areas) do
                 if collide(Player,area) then
                     self.area=area
@@ -1837,7 +1838,7 @@ Inventory = {
         self.equipped_key=nil
     end,
     update=function(self)
-        if (Dialog.active_key!=false or Shop.open or Shop._open) return
+        if (Dialog.active_key or Shop.open or Shop._open) return
 
         if btnp(5) then
             self.open=not self.open
@@ -1877,13 +1878,13 @@ Inventory = {
         for y=0,flr((item.max-1)/5) do
             for x=16-min(item.max-y*5,5),15 do
                 if item.quantity<i then
-                    pal(Graphics.palbw)
+                    pal(palbw)
                 end
                 spr(46,x*9-16,y*9+1,1,1)
-                Graphics.reset_pal()
                 i+=1
             end
         end
+        reset_pal(true)
 
         -- Inventory Selector
         if self.timer>0 then
@@ -1948,10 +1949,11 @@ Inventory = {
         if in_table(type(item),split("string,number")) then
             item=self:get_item(item)
         end
-        if item==nil then return end
-        spr(item.f,x,y)
-        if type(digits)=="number" and not in_table(item.name, split("dagger,unknown")) then
-            printo(pad(tostr(item.quantity),digits),x+10,y+2)
+        if item then
+            spr(item.f,x,y)
+            if digits and not in_table(item.name, split("dagger,unknown")) then
+                printo(pad(tostr(item.quantity),digits),x+10,y+2)
+            end
         end
     end
 }
@@ -1966,8 +1968,8 @@ function restart()
     --cls()
     --reload()
 
-    Graphics.reset_pal()
-    State:reset()
+    reset_pal()
+    StateReset()
 
     Screen:init()
     Actors:init()
@@ -2013,13 +2015,13 @@ function _update()
     Dialog:update()
 
     Fade:update()
-    State:update()
+    StateUpdate()
 
 end
 
 function _draw()
     if Paused then
-        pal(Graphics.palbw)
+        pal(palbw)
     end
 
     Screen:draw_bg()
@@ -2032,7 +2034,7 @@ function _draw()
     --Clouds:draw()
 
     -- draw everything else black
-    Graphics.draw_around(Screen.current_position.x*8,Screen.current_position.y*8,128,128,0)
+    draw_around(Screen.current_position.x*8,Screen.current_position.y*8,128,128,0)
 
     local l=Screen:get_level()
     local c=5
@@ -2041,14 +2043,14 @@ function _draw()
     elseif l==1 then
         c=1
     end
-    Path:draw(Player.cord,c)
+    Path.draw(Player.cord,c)
 
     Actors:draw()
 
     Map:draw_hidden()
 
     if Paused then
-        Graphics.reset_pal(true)
+        reset_pal(true)
     end
 
     -- reset for hud
