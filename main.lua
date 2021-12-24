@@ -9,10 +9,12 @@ function StateReset()
     Paused=false
     Dead=false
     DeadStarted=false
+    Escaped=false
+    Pod=nil
 end
 function StateUpdate()
     if (not Started and btnp(5)) Started=true
-    if Dead and btnp(5) then
+    if (Dead or Escaped) and btnp(5) then
         DeadStarted=true
         Fade:out()
     end
@@ -261,7 +263,7 @@ function ActorReward()
         if self.animating then
             self.t-=tdelta
             if self.t<=0 then
-                Actors:remove_actor(self)
+                del(Actors,self)
             end
             return
         end
@@ -412,7 +414,7 @@ function ActorRewardTreasure()
             end
 
             -- Show reward and animate up
-            local a = Actors:create_reward(self.rf,self.x,self.y,nil,-0.25,-1)
+            local a = CreateReward(self.rf,self.x,self.y,nil,-0.25,-1)
             a:animate()
         end
     }
@@ -530,7 +532,7 @@ function ActorEnemySquid()
             if self.life<=0 then
                 if self.s>1 and not self.rewarded then
                     self.rewarded=true
-                    Actors:create_reward(85,self.x,self.y,ActorRewardItem()):set_reward() -- key
+                    CreateReward(85,self.x,self.y,ActorRewardItem()):set_reward() -- key
                 end
             else
                 -- bob vertically
@@ -541,7 +543,7 @@ function ActorEnemySquid()
                     self.timer-=tdelta
                     if self.timer<=0 then
                         self.timer=3+rnd(2)
-                        local a=Actors:create_enemy(39,self.x,self.y,ActorEnemyUrchin())
+                        local a=CreateEnemy(39,self.x,self.y,ActorEnemyUrchin())
                         follow_target(a,Player,0.1)
                     end
                 end
@@ -706,21 +708,21 @@ function ActorPlayer()
         f=16,
         w=2,
         h=1.5,
-        speed=0.125,
-
-        doors=split("106_2_2_0_0,107_2_2_-1_0,123_2_2_-1_-1,122_2_2_0_-1,68_1_2_0_0,84_1_2_0_-1"), -- f_w_h_dx_dy
 
         init = function(self)
             self.life_timer=0
             self.attack_timer=0
 
+            self.speed=0.125
+
             self.cord={}
 
-            if type(self.doors[1])=="string" then
-                for k,v in pairs(self.doors) do
-                    self.doors[k]=split(v,"_",true)
-                end
+            self.doors=split("106_2_2_0_0,107_2_2_-1_0,123_2_2_-1_-1,122_2_2_0_-1,68_1_2_0_0,84_1_2_0_-1") -- f_w_h_dx_dy
+            for k,v in pairs(self.doors) do
+                self.doors[k]=split(v,"_",true)
             end
+
+            self.escape={x=20,y=121,w=7,h=4}
         end,
         update = function(self)
             self:update_actor()
@@ -783,9 +785,9 @@ function ActorPlayer()
 
                             local a
                             if item.name=="harpoon" then
-                                a=Actors:create_projectile(ActorProjectileHarpoon(),self.x,self.y,-1,-0.375)
+                                a=CreateProjectile(ActorProjectileHarpoon(),self.x,self.y,-1,-0.375)
                             else
-                                a=Actors:create_projectile(ActorProjectileBomb(),self.x,self.y,0.75,-0.625)
+                                a=CreateProjectile(ActorProjectileBomb(),self.x,self.y,0.75,-0.625)
                                 if self.flx then
                                     a.x-=2.375
                                 end
@@ -799,7 +801,7 @@ function ActorPlayer()
                         if self.attack_timer<=0 then
                             self.attack_timer=0.25
 
-                            for a in all(Actors.actors) do
+                            for a in all(Actors) do
                                 local p={
                                     x=self.x+1.5,
                                     y=self.y
@@ -831,6 +833,21 @@ function ActorPlayer()
                                 end
                             end
                         end
+                    elseif item.name=="unknown" and collide(self,self.escape) then
+                        Pod={}
+                        for y=self.escape.y,self.escape.y+self.escape.h do
+                            for x=self.escape.x,self.escape.x+self.escape.w do
+                                local f=Map:mget(x,y,1,1)
+                                if f>0 then
+                                    local a=CreateActor(f,x,y)
+                                    add(Pod,a)
+                                    Map:mclear(x,y)
+                                end
+                            end
+                        end
+                        del(Actors,self)
+                        music(-1,1000)
+                        Screen:play_sfx(23,-1)
                     end
                 end
             end
@@ -897,16 +914,16 @@ function ActorProjectile()
 
         -- check wall collision
         if (not self.flx and Map:is_solid(self.x+self.w/2,self.y)) or (self.flx and Map:is_solid(self.x-self.w/2,self.y)) then
-            Actors:remove_actor(self)
+            del(Actors,self)
             Screen:play_sfx(11)
             return
         end
 
         -- check enemy collision
-        for a in all(Actors.actors) do
+        for a in all(Actors) do
             if a.class=="enemy" and a.life>0 and collide(self,a) then
                 a:damage(self.dmg)
-                Actors:remove_actor(self)
+                del(Actors,self)
                 Screen:play_sfx(2)
                 break
             end
@@ -971,7 +988,7 @@ function ActorProjectileBomb()
             self.timer-=tdelta
 
             if self.timer>0 then
-                for a in all(Actors.actors) do
+                for a in all(Actors) do
                     if a.class=="enemy" and a.life>0 and collide(self,a) then
                         self.timer=0
                         self.dy=0
@@ -986,7 +1003,7 @@ function ActorProjectileBomb()
                 self.dy=0
 
                 local r=self:get_radius()
-                for a in all(Actors.actors) do
+                for a in all(Actors) do
                     if not in_table(a,self.damaged) and in_radius(self,a,r) and in_table(a.class,split("enemy,player")) then
                         add(self.damaged,a)
                         a:damage(self.dmg)
@@ -1007,7 +1024,7 @@ function ActorProjectileBomb()
                     Screen:play_sfx(18,0.5)
                 end
             elseif self.timer<=-0.5 then
-                Actors:remove_actor(self)
+                del(Actors,self)
             end
         end,
         draw = function(self)
@@ -1027,135 +1044,97 @@ function ActorProjectileBomb()
     }
 end
 
-Actors = {
-    init = function(self)
-        self.actors={}
-    end,
-    load = function(self) -- actually init actors
-        foreach(self.actors, function(obj) obj:init() end)
-    end,
-    reload = function(self,index) -- update on screen change
-        foreach(self.actors, function (obj) obj:reload(index) end)
-    end,
-    update = function(self)
-        foreach(self.actors, function(obj) obj:update() end)
-    end,
-    draw = function(self)
-        foreach(self.actors, function(obj) if obj.name!="player" then obj:draw() end end)
-    end,
-    make_actor = function(self,a)
-        if type(a) != "table" then
-            a={}
-        end
+-- Main Actors functions ("Actors" is global table)
 
-        local b=Actor()
-
-        for k,v in pairs(a) do
-            b[k]=v
-        end
-
-        return b
-    end,
-    add_actor = function(self,a)
-        a = self:make_actor(a)
-        add(self.actors,a)
-        return a
-    end,
-    remove_actor = function(self,a)
-        del(self.actors,a)
-    end,
-
-    create_actor = function(self,f,x,y,a,dx,dy,m)
-        a = self:add_actor(a or {})
-        dx = dx or 0
-        dy = dy or 0
-        m = m or 0
-        if Map:mget(x,y)==f then
-            Map:mclear(x,y,ceil(a.w),ceil(a.h),m)
-        end
-        a.x=x+dx
-        a.y=y+dy
-        if a.center then
-            a.x+=a.w/2
-            a.y+=a.h/2
-        end
-        a._x=a.x
-        a._y=a.y
-        a.f=f
-        a.screen=get_screen_index(a)
-        a.__x=a.x
-        a.__y=a.y
-        return a
-    end,
-
-    create_reward = function(self,f,x,y,a,dx,dy)
-        local a = a or {}
-        local b = ActorReward()
-
-        for k,v in pairs(a) do
-            b[k]=v
-        end
-
-        if f==126 then
-            b.w=2
-        end
-
-        return self:create_actor(f,x,y,b,dx,dy)
-    end,
-
-    create_enemy = function(self,f,x,y,a,dx,dy)
-        local a = a or {}
-        local b = ActorEnemy()
-
-        for k,v in pairs(a) do
-            b[k]=v
-        end
-
-        return self:create_actor(f,x,y,b,dx,dy)
-    end,
-
-    create_projectile = function(self,a,x,y,dx,dy)
-        local a = a or {}
-        local b = ActorProjectile()
-
-        for k,v in pairs(a) do
-            b[k]=v
-        end
-
-        return self:create_actor(b.f,x,y,b,dx,dy)
+function CreateActor(f,x,y,a,dx,dy,m)
+    a=a or {}
+    local b=Actor()
+    for k,v in pairs(a) do
+        b[k]=v
     end
-}
+    add(Actors,b)
 
-Camera = {
-    x=0,
-    y=0,
-    update=function(self)
-        -- camera movement (tile by tile)
-        if self.x!=Screen.current_position.x*8 then
-            local dx=1
-            if Screen.current_position.x*8<self.x then dx=-1 end
-            self.x+=dx*8
-        end
-        if self.y!=Screen.current_position.y*8 then
-            local dy=1
-            if Screen.current_position.y*8<self.y then dy=-1 end
-            self.y+=dy*8
-        end
-    end,
-    draw=function(self)
-        camera(self.x,self.y)
-    end,
-    set_position=function(self,p)
-        self.x=p.x
-        self.y=p.y
-    end,
-    set_screen_position=function(self,p)
-        p=get_screen_position(p)
-        p.x*=8
-        p.y*=8
-        self:set_position(p)
+    dx = dx or 0
+    dy = dy or 0
+    m = m or 0
+    if Map:mget(x,y)==f then
+        Map:mclear(x,y,ceil(b.w),ceil(b.h),m)
     end
-}
+    b.x=x+dx
+    b.y=y+dy
+    if b.center then
+        b.x+=b.w/2
+        b.y+=b.h/2
+    end
+    b._x=b.x
+    b._y=b.y
+    b.f=f
+    b.screen=get_screen_index(b)
+    b.__x=b.x
+    b.__y=b.y
+    return b
+end
+
+function CreateReward(f,x,y,a,dx,dy)
+    local a = a or {}
+    local b = ActorReward()
+
+    for k,v in pairs(a) do
+        b[k]=v
+    end
+
+    if f==126 then
+        b.w=2
+    end
+
+    return CreateActor(f,x,y,b,dx,dy)
+end
+
+function CreateEnemy(f,x,y,a,dx,dy)
+    local a = a or {}
+    local b = ActorEnemy()
+
+    for k,v in pairs(a) do
+        b[k]=v
+    end
+
+    return CreateActor(f,x,y,b,dx,dy)
+end
+
+function CreateProjectile(a,x,y,dx,dy)
+    local a = a or {}
+    local b = ActorProjectile()
+
+    for k,v in pairs(a) do
+        b[k]=v
+    end
+
+    return CreateActor(b.f,x,y,b,dx,dy)
+end
+
+--CameraX=0
+--CameraY=0
+function CameraUpdate()
+    -- camera movement (tile by tile)
+    if CameraX!=Screen.current_position.x*8 then
+        local dx=1
+        if (Screen.current_position.x*8<CameraX) dx=-1
+        CameraX+=dx*8
+    end
+    if CameraY!=Screen.current_position.y*8 then
+        local dy=1
+        if (Screen.current_position.y*8<CameraY) dy=-1
+        CameraY+=dy*8
+    end
+end
+function CameraSetScreenPosition(p)
+    p=get_screen_position(p)
+    p.x*=8
+    p.y*=8
+    CameraX=p.x
+    CameraY=p.y
+end
+
 Map = {
     --[[
     flags:
@@ -1207,29 +1186,29 @@ Map = {
                 elseif fget(m,1) then -- reward
                     if m==25 then -- chest
                         local rf=Map:mget(x+1,y)
-                        Actors:create_reward(m,x,y,ActorRewardTreasure(),0,0.375):set_reward(rf)
+                        CreateReward(m,x,y,ActorRewardTreasure(),0,0.375):set_reward(rf)
                     else -- individual item
-                        Actors:create_reward(m,x,y,ActorRewardItem()):set_reward()
+                        CreateReward(m,x,y,ActorRewardItem()):set_reward()
                     end
                 elseif fget(m,2) then -- enemy
                     if fget(m,3) then
-                        Actors:create_enemy(m,x,y,ActorEnemyFish())
+                        CreateEnemy(m,x,y,ActorEnemyFish())
                     elseif fget(m,4) then
-                        Actors:create_enemy(m,x,y,ActorEnemyUrchin())
+                        CreateEnemy(m,x,y,ActorEnemyUrchin())
                     elseif fget(m,5) then
-                        a=Actors:create_enemy(m,x,y,ActorEnemySquid())
+                        a=CreateEnemy(m,x,y,ActorEnemySquid())
                         if Screen:in_screen(a,9) then -- boss
                             a.s=2
                             a.life=8
                         end
                     elseif fget(m,6) then
-                        a=Actors:create_enemy(m,x,y,ActorEnemyAngler())
+                        a=CreateEnemy(m,x,y,ActorEnemyAngler())
                         if Screen:in_screen(a,18) then -- boss
                             a.s=2
                             a.life=8
                         end
                     elseif fget(m,7) then
-                        a=Actors:create_enemy(m,x,y,ActorEnemyAlien())
+                        a=CreateEnemy(m,x,y,ActorEnemyAlien())
                         if Screen:in_screen(a,28) then -- control room
                             a.s=2
                             a.life=4
@@ -1237,10 +1216,10 @@ Map = {
                     end
                 elseif fget(m,3) then -- boat
                     if not Boat then
-                        Boat = Actors:create_actor(m,x,y,ActorBoat(),0,1.25,2)
+                        Boat = CreateActor(m,x,y,ActorBoat(),0,1.25,2)
                     end
                 elseif fget(m,5) then -- player
-                    Player = Actors:create_actor(m,x,y,ActorPlayer())
+                    Player = CreateActor(m,x,y,ActorPlayer())
                 end
             end
         end
@@ -1482,7 +1461,7 @@ Screen = {
         self:music()
         self:sfx()
 
-        Actors:reload(self.current_index)
+        foreach(Actors, function (obj) obj:reload(index) end)
     end,
     in_screen=function(self,p,index)
         index=index or self.current_index
@@ -1532,7 +1511,7 @@ Screen = {
             bgc=0
             fgc=5
             buc=6
-        elseif Dead then
+        elseif Dead or Escaped then
             bgc=5
             --fgc=0
             --buc=0
@@ -1656,15 +1635,16 @@ Dialog = {
         --local text
 
         -- start controls
-        if not Started or Dead then
+        if not Started or Dead or Escaped then
             text="diver"
             local s=4.5+sin(Time/4)*2
-            if Dead then
+            if Dead or Escaped then
                 text="you perished"
+                if (Escaped) text="you've escaped!"
                 s/=3
             end
 
-            local x=64-#text*2*s+s/2
+            local x=64-#text*1.99*s+s/2
             local y=64-s*2.5
 
             prints(text,x,y,s,s,14)
@@ -1692,6 +1672,7 @@ Dialog = {
 
             text="press \151 to start"
             if (Dead) text="press \151 to try again"
+            if (Escaped) text="press \151 to play again"
             printo(text,64-#text*2,86)
         elseif Screen.current_index==1 then
             printo("swim:\139\148\131\145",2,11)
@@ -1832,7 +1813,7 @@ Inventory = {
         self.equipped_key=nil
     end,
     update=function(self)
-        if (Dialog.active_key or Shop.open or Shop._open or Dead) return
+        if (Dialog.active_key or Shop.open or Shop._open or Dead or Escaped) return
 
         if btnp(5) then
             self.open=not self.open
@@ -1883,14 +1864,14 @@ Inventory = {
         -- Inventory Selector
         if self.timer>0 then
             local a=min(self.timer/0.25,1)
-            circfill(Player.x*8-Camera.x,Player.y*8-Camera.y,a*14,11)
-            circfill(Player.x*8-Camera.x,Player.y*8-Camera.y,a*10,3)
+            circfill(Player.x*8-CameraX,Player.y*8-CameraY,a*14,11)
+            circfill(Player.x*8-CameraX,Player.y*8-CameraY,a*10,3)
 
             -- display items, a is distance
             a*=14 -- 14=radius
             for k,i in pairs(self.equipped_items) do
-                local x=Player.x*8+cos(k/#self.equipped_items)*a-Camera.x
-                local y=Player.y*8+sin(k/#self.equipped_items)*a-Camera.y
+                local x=Player.x*8+cos(k/#self.equipped_items)*a-CameraX
+                local y=Player.y*8+sin(k/#self.equipped_items)*a-CameraY
                 if self.equipped_key==k then
                     circfill(x,y,6,7)
                 else
@@ -1965,17 +1946,17 @@ function restart()
     StateReset()
 
     Screen:init()
-    Actors:init()
+    Actors={}
     Map:init()
     Dialog:init()
     Shop:init()
     Inventory:init()
 
     Map:load()
-    Actors:load() -- must be run after Map:load() for actors to be created
+    foreach(Actors, function(obj) obj:init() end) -- must be run after Map:load() for actors to be created
 
     Screen:update()
-    Camera:set_screen_position(Player)
+    CameraSetScreenPosition(Player)
 
     Fade:_in()
 end
@@ -1984,9 +1965,24 @@ function _update()
 --function _update60()
 
     if not Paused then
-        Actors:update()
+        foreach(Actors, function(obj) obj:update() end)
         Map:update()
         --Clouds:update()
+
+        if Pod then
+            if #Pod==0 and not Escaped then
+                Escaped=true
+                sfx(-1,3)
+                music(6,1000)
+            else
+                for a in all(Pod) do
+                    a.dy-=0.001
+                    if (a.y+a.h)*8<CameraY then
+                        del(Pod,a)
+                    end
+                end
+            end
+        end
     end
 
     if Started then
@@ -2001,15 +1997,15 @@ function _update()
 end
 
 function _draw()
-    if Paused or Dead then
+    if Paused or Dead or Escaped then
         pal(palbw)
     end
 
     Screen:draw_bg()
     Screen:update()
 
-    Camera:update()
-    Camera:draw()
+    CameraUpdate()
+    camera(CameraX,CameraY)
 
     Map:draw()
     --Clouds:draw()
@@ -2017,20 +2013,24 @@ function _draw()
     -- draw everything else black
     draw_around(Screen.current_position.x*8,Screen.current_position.y*8,128,128,0)
 
-    local l=Screen:get_level()
-    local c=5
-    if l==0 then
-        c=2
-    elseif l==1 then
-        c=1
+    if not Pod then
+        local l=Screen:get_level()
+        local c=5
+        if l==0 then
+            c=2
+        elseif l==1 then
+            c=1
+        end
+        draw_path(Player.cord,c)
     end
-    draw_path(Player.cord,c)
 
-    Actors:draw()
+    for a in all(Actors) do
+        if (a.name!="player") a:draw()
+    end
 
     Map:draw_hidden()
 
-    if Paused or Dead then
+    if Paused or Dead or Escaped then
         reset_pal(true)
     end
 
@@ -2041,9 +2041,11 @@ function _draw()
         Map:draw_hud()
     end
 
-    -- draw player over hud
-    Camera:draw()
-    Player:draw()
+    if not Pod then
+        -- draw player over hud
+        camera(CameraX,CameraY)
+        Player:draw()
+    end
 
     camera()
     Shop:draw()
