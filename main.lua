@@ -999,9 +999,11 @@ function ActorProjectileBomb()
 
                 local r=self:get_radius()
                 for a in all(Actors) do
-                    if not in_table(a,self.damaged) and in_radius(self,a,r) and in_table(a.class,"enemy,player") then
+                    if in_table(a.class,"enemy,player") and not in_table(a,self.damaged) and in_radius(self,a,r) then
                         add(self.damaged,a)
                         a:damage(self.dmg)
+                    elseif a.name=="bomb" and not a.exploded and in_radius(self,a,r) then
+                        a.timer=0
                     end
                 end
 
