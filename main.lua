@@ -399,7 +399,7 @@ function ActorRewardTreasure()
                 Inventory:add_item(self.r,5,true)
             elseif self.r=="cord" then
                 Inventory:add_item("cord",16,true)
-            elseif in_table(self.r,split("life,unknown,dagger,key")) then
+            elseif in_table(self.r,"life,unknown,dagger,key") then
                 Inventory:add_item(self.r,1,true)
             elseif self.r=="speed" then
                 Player.speed+=0.0625
@@ -770,7 +770,7 @@ function ActorPlayer()
                     item=Inventory.equipped_item
                     if item==nil or item.quantity<=0 then
                         Screen:play_sfx(9)
-                    elseif in_table(item.name,split("harpoon,bomb")) then
+                    elseif in_table(item.name,"harpoon,bomb") then
                         if self.attack_timer<=0 then
                             self.attack_timer=0.25
                             Inventory:remove_item(item)
@@ -799,7 +799,7 @@ function ActorPlayer()
                                     y=self.y
                                 }
                                 if (self.flx) p.x-=3
-                                if a.name=="urchin" and a.life>0 and in_radius(p,a,1) then
+                                if in_table(a.name,"urchin,alien") and a.life>0 and in_radius(p,a,1) then
                                     a:damage(self.dmg)
                                     Screen:play_sfx(2)
                                     self.dagger=true
@@ -996,7 +996,7 @@ function ActorProjectileBomb()
 
                 local r=self:get_radius()
                 for a in all(Actors) do
-                    if not in_table(a,self.damaged) and in_radius(self,a,r) and in_table(a.class,split("enemy,player")) then
+                    if not in_table(a,self.damaged) and in_radius(self,a,r) and in_table(a.class,"enemy,player") then
                         add(self.damaged,a)
                         a:damage(self.dmg)
                     end
@@ -1893,7 +1893,7 @@ Inventory = {
         amount=amount or 1
         item.quantity+=amount
         if max then
-            if item.max<=0 and not in_table(item.name, split("life,cord,coin")) then
+            if item.max<=0 and not in_table(item.name, "life,cord,coin") then
                 add(self.equipped_items, item)
             end
             item.max+=amount
@@ -1913,12 +1913,12 @@ Inventory = {
         return true
     end,
     draw_item=function(self,item,x,y,digits)
-        if in_table(type(item),split("string,number")) then
+        if in_table(type(item),"string,number") then
             item=self:get_item(item)
         end
         if item then
             spr(item.f,x,y)
-            if digits and not in_table(item.name, split("dagger,unknown")) then
+            if digits and not in_table(item.name, "dagger,unknown") then
                 printo(pad(tostr(item.quantity),digits),x+10,y+2)
             end
         end
@@ -2086,6 +2086,7 @@ end
 -- Table
 
 function in_table(a,t)
+    if (type(t)=="string") t=split(t)
     for b in all(t) do
         if a==b then
             return true
