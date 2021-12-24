@@ -1453,7 +1453,7 @@ Screen = {
         self:music()
         self:sfx()
 
-        foreach(Actors, function (obj) obj:reload(index) end)
+        foreach(Actors, function (obj) obj:reload(self.current_index) end)
     end,
     in_screen=function(self,p,index)
         index=index or self.current_index
