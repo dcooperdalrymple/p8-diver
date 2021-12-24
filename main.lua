@@ -1650,7 +1650,7 @@ Dialog = {
                 local c=0
                 if (j>=64) c=8
 
-                local m=flr(j/2-23) --flr(9-(j-64)/2)
+                local m=flr(41-j/2) --flr(9-(j-64)/2)
                 if (m<1) m=1
 
                 for i=x,x+#text*4*s do
