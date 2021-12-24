@@ -55,7 +55,7 @@ There are a number of dangerous creatures lurking below just waiting for a tasty
 
 ### Bombs
 
-These can be a great tool to clear debris found below and uncover hidden secrets. Their explosion can be quite deadly too! Just made sure to back away quickly before a bomb goes off. And be careful, because bombs will go off immediately when they come in contact with a dangerous creature.
+These can be a great tool to clear debris found below and uncover hidden secrets. Their explosion can be quite deadly too! Just make sure to back away quickly before a bomb goes off. And be careful, because bombs will go off immediately when they come in contact with a dangerous creature.
 
 ### Dagger
 
