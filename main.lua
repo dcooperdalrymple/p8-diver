@@ -212,19 +212,11 @@ function Actor()
     local function draw(self)
         local _x=self.x*8
         local _y=self.y*8
-        if self.s==1 then
-            if self.center then
-                _x-=self.w*4
-                _y-=self.h*4
-            end
-            spr(self.f,_x,_y,self.w,self.h,self.flx,self.fly)
-        else
-            if self.center then
-                _x-=self.w*self.s*4
-                _y-=self.h*self.s*4
-            end
-            sspr(self.f%16*8,flr(self.f/16)*8,self.w*8,self.h*8,_x,_y,self.w*self.s*8,self.h*self.s*8,self.flx,self.fly)
+        if self.center then
+            _x-=self.w*self.s*4
+            _y-=self.h*self.s*4
         end
+        sspr(self.f%16*8,flr(self.f/16)*8,self.w*8,self.h*8,_x,_y,self.w*self.s*8,self.h*self.s*8,self.flx,self.fly)
     end
 
     return {
@@ -2030,9 +2022,7 @@ function _draw()
 
     Map:draw_hidden()
 
-    if Paused or Dead or Escaped then
-        reset_pal(true)
-    end
+    reset_pal(true)
 
     -- reset for hud
     if Started then
@@ -2045,9 +2035,9 @@ function _draw()
         -- draw player over hud
         camera(CameraX,CameraY)
         Player:draw()
+        camera()
     end
 
-    camera()
     Shop:draw()
     Dialog:draw()
     Fade:draw()
