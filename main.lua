@@ -796,10 +796,13 @@ function ActorPlayer()
                             for a in all(Actors) do
                                 local p={
                                     x=self.x+1.5,
-                                    y=self.y
+                                    y=self.y,
+                                    w=1,
+                                    h=1,
+                                    center=true
                                 }
                                 if (self.flx) p.x-=3
-                                if in_table(a.name,"urchin,alien") and a.life>0 and in_radius(p,a,1) then
+                                if in_table(a.name,"urchin,alien") and a.life>0 and collide(p,a) then
                                     a:damage(self.dmg)
                                     Screen:play_sfx(2)
                                     self.dagger=true
