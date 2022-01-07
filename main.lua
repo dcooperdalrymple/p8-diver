@@ -124,8 +124,7 @@ function reset_pal(force)
     palt(14, true)
     palt(0, false)
 end
-function draw_around(x,y,w,h,c) -- fills around around a rect
-    c=c or 0
+function draw_around(x,y,w,h) -- fills around a rect
     if y>0 then -- top
         rectfill(0,0,128*8,y-1,0)
     end
@@ -453,6 +452,7 @@ function ActorEnemy()
                 self.dy=0.02
                 self.dx=0
                 self.fly=true
+                Dialog:check({"enemy", self.name, self.screen})
             end
         end,
         draw = draw,
@@ -1574,6 +1574,7 @@ Dialog = {
             cord#some extra breathing tube!_this will come in handy...~maybe i should delve deeper?#reward~chest~cord,
             key#a mysterious key!_there should be a door_around here that fits.#reward~chest~key,
             harpoon#sweet!_now i can_defend myself~there are only_5 harpoons_in this chest~looks like_i have to_be stingy#reward~chest~harpoon,
+            urchin_hidden#looks like this_urchin is leading_to somewhere.~i wonder what_secret it's_keeping hidden?#enemy~urchin~7,
             bomb#finally!_now i can do_some real damage~or maybe_there's a way_deeper?#reward~chest~bomb,
             dagger#a dagger?!_what is this doing_here?~looks aged_and blunt with_weird markings.~well maybe it_still has some_use left.#reward~chest~dagger,
             envirosuit#oooh a fancy_new diving_suit!~the fibers seem_incredibly durable.~who made this?#reward~item~suit,
@@ -2008,7 +2009,7 @@ function _draw()
     --Clouds:draw()
 
     -- draw everything else black
-    draw_around(Screen.current_position.x*8,Screen.current_position.y*8,128,128,0)
+    draw_around(Screen.current_position.x*8,Screen.current_position.y*8,128,128)
 
     if not Pod then
         local l=Screen:get_level()
