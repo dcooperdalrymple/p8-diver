@@ -1714,6 +1714,14 @@ Shop = {
         end
     end,
     update=function(self)
+        self.area=nil
+        for area in all(self.areas) do
+            if collide(Player,area) then
+                self.area=area
+                break
+            end
+        end
+
         self._open=self.open
         if self.open and btnp(5) then
             if self.key and Inventory:remove_item("coin",5) then
@@ -1730,15 +1738,9 @@ Shop = {
                 self.key,self.item=next(self.items,self.key)
                 if (self.key==nil or self.can_buy(self.item.name)) break
             end
-        elseif not Paused and not Dead and btnp(5) then
-            for area in all(self.areas) do
-                if collide(Player,area) then
-                    self.area=area
-                    self.open=not self.open
-                    Paused=self.open
-                    break
-                end
-            end
+        elseif not Paused and not Dead and btnp(5) and self.area then
+            self.open=not self.open
+            Paused=self.open
         end
     end,
     can_buy=function(name)
@@ -1765,6 +1767,8 @@ Shop = {
 
             Inventory:draw_item("coin",84,84)
             print("5",80,86,7)
+        elseif self.area then
+            printo("enter shop:\151",75,11)
         end
     end
 }
