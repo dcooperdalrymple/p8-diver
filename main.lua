@@ -1433,6 +1433,8 @@ Screen = {
         self.current_sfx=-1
         self.current_music=-1
         self.sfx_timer=0
+
+        self.bgc_lut=split("1_2_12,2_0_0,0_8_8,8_0_0")
     end,
     update=function(self)
         if not self.current_index or get_screen_index(Player)!=self.current_index then
@@ -1465,11 +1467,11 @@ Screen = {
         return index==get_screen_index(p)
     end,
     same=function(self,a,b,index)
-        index=index or self.current_index
+        --index=index or self.current_index
         return self:in_screen(a,index) and self:in_screen(b,index)
     end,
     get_level=function(self,index)
-        index=index or get_screen_index(Player)
+        index=index or self.current_index --get_screen_index(Player)
         local l=flr(index/8)
         if index==4 then
             l=1
@@ -1500,36 +1502,18 @@ Screen = {
         self.current_music=song
     end,
     draw_bg=function(self,index)
-        local l=self:get_level(index)
-        local bgc=8
-        local fgc=0
-        local buc=0
         if Paused then
-            bgc=0
-            fgc=5
-            buc=6
+            bgc=split("0,5,6")
         elseif Dead or Escaped then
-            bgc=5
-            --fgc=0
-            --buc=0
-        elseif l==0 then
-            bgc=1
-            fgc=2
-            buc=12
-        elseif l==1 then
-            bgc=2
-            --fgc=0
-            --buc=0
-        elseif l==2 then
-            bgc=0
-            fgc=8
-            buc=8
+            bgc=split("5,0,0")
+        else
+            bgc=split(self.bgc_lut[self:get_level(index)+1],"_")
         end
 
-        cls(bgc)
+        cls(bgc[1])
         for i=0,16 do
             fillp(Fade.pat[16-i])
-            rectfill(0,96+32/16*i,128,96+32/16*(i+1),fgc)
+            rectfill(0,96+32/16*i,128,96+32/16*(i+1),bgc[2])
         end
         fillp()
 
@@ -1556,7 +1540,7 @@ Screen = {
             end
         end
         for b in all(self.bubbles) do
-            pset(b.x,b.y,buc)
+            pset(b.x,b.y,bgc[3])
         end
     end,
     play_sfx=function(self,n,l)
