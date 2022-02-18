@@ -28,9 +28,7 @@ function get_path_length(path) -- get length of list of points
     local l=0
     local _pt
     for pt in all(path) do
-        if _pt then
-            l+=dist(_pt.x-pt.x,_pt.y-pt.y)
-        end
+        if (_pt) l+=dist(_pt.x-pt.x,_pt.y-pt.y)
         _pt=pt
     end
     return l
@@ -39,9 +37,7 @@ end
 function draw_path(path,c)
     local _pt
     for pt in all(path) do
-        if _pt then
-            line(_pt.x*8,_pt.y*8,pt.x*8,pt.y*8,c)
-        end
+        if (_pt) line(_pt.x*8,_pt.y*8,pt.x*8,pt.y*8,c)
         _pt=pt
     end
 end
@@ -69,14 +65,8 @@ Path = {
     cast=function(self,a,b,r) -- simple cast to find if solid is in path -- r=resolution
         self.ray_x=a.x
         self.ray_y=a.y
-        r=r or 1
 
-        local dx=b.x-a.x
-        local dy=b.y-a.y
-        local d=idist(dx,dy)/r
-        dx*=d
-        dy*=d
-
+        local dx,dy=eddist(b,a,r)
         while true do
             self.ray_x+=dx
             self.ray_y+=dy
@@ -93,14 +83,8 @@ Path = {
     castcast=function(self,a,b,c,r) -- cast between a triangle to find solid
         local rayray_x=b.x
         local rayray_y=b.y
-        r=r or 1
 
-        local dx=c.x-b.x
-        local dy=c.y-b.y
-        local d=idist(dx,dy)/r
-        dx*=d
-        dy*=d
-
+        local dx,dy=eddist(c,b,r)
         while true do
             rayray_x+=dx
             rayray_y+=dy
@@ -1481,25 +1465,22 @@ Screen = {
         return l
     end,
     sfx=function(self,index)
-        local l=self:get_level(index)
         local selected=8
-
-        local selected=8
-        if l==0 then
-            selected=7
-        end
+        if (index or self.current_index<4) selected=7
+        if (not SfxEnabled) selected=-1
         if selected!=self.current_sfx then
-            sfx(selected,3)
             self.current_sfx=selected
+            sfx(selected,3)
         end
     end,
     music=function(self,index)
+        if (not MusicEnabled) return self:_music(-1)
         local selected=self:get_level(index)
         if (selected!=self.current_music) self:_music(selected)
     end,
     _music=function(self,song)
-        music(song,0,0b0111)
         self.current_music=song
+        music(song,0,0b0111)
     end,
     draw_bg=function(self,index)
         if Paused then
@@ -1546,8 +1527,9 @@ Screen = {
     play_sfx=function(self,n,l)
         l=l or 0.1
         self.current_sfx=-1
-        sfx(n,3)
         self.sfx_timer=l
+        if (not SfxEnabled) n=-1
+        sfx(n,3)
     end
 }
 
@@ -1632,19 +1614,11 @@ Dialog = {
             prints(text,x,y,s,s,14)
 
             for j=y,y+5*s+1 do
-                --local k=(j-y)/(5*s+1)
-
-                local c=0
-                if (j>=64) c=8
-
-                local m=flr(41-j/2) --flr(9-(j-64)/2)
-                if (m<1) m=1
-
+                local m=max(flr(41-j/2),1) --flr(9-(j-64)/2)
                 for i=x,x+#text*4*s do
-                    local _c=pget(i,j)
-                    if _c==14 then
-                        if flr(flr(i)+flr(j)*m/2)%m==0 then
-                            pset(i,j,c)
+                    if pget(i,j)==14 then
+                        if j>=64 and flr(flr(i)+flr(j)*m/2+Time)%m==0 then
+                            pset(i,j,8)
                         else
                             pset(i,j,0)
                         end
@@ -1920,8 +1894,19 @@ Inventory = {
 }
 
 function _init()
+    MusicEnabled=true
+    SfxEnabled=true
     restart()
+    setmenuitems()
+end
+function setmenuitems()
     menuitem(1,"restart",restart)
+    menuitem(2,"toggle music:"..getbooltext(MusicEnabled), toggle_music)
+    menuitem(3,"toggle sfx:"..getbooltext(SfxEnabled), toggle_sfx)
+end
+function getbooltext(b)
+    if (b) return "on"
+    return "off"
 end
 
 function restart()
@@ -1945,6 +1930,20 @@ function restart()
     CameraSetScreenPosition(Player)
 
     Fade:_in()
+end
+
+function toggle_music()
+    MusicEnabled = not MusicEnabled
+    Screen:music()
+    setmenuitems()
+    return true
+end
+
+function toggle_sfx()
+    SfxEnabled = not SfxEnabled
+    Screen:sfx()
+    setmenuitems()
+    return true
 end
 
 function _update()
@@ -2000,14 +1999,7 @@ function _draw()
     draw_around(Screen.current_position.x*8,Screen.current_position.y*8,128,128)
 
     if not Pod then
-        local l=Screen:get_level()
-        local c=5
-        if l==0 then
-            c=2
-        elseif l==1 then
-            c=1
-        end
-        draw_path(Player.cord,c)
+        draw_path(Player.cord,split("2,1,5,5")[Screen:get_level()+1])
     end
 
     for a in all(Actors) do
@@ -2111,17 +2103,17 @@ function dist(x,y)
     if (d<1) d=1
     return sqrt(d)
 end
-function idist(x,y)
-    return 1/dist(x,y)
+function eddist(a,b,r) -- equalized delta distance
+    r=r or 1
+    local dx=a.x-b.x
+    local dy=a.y-b.y
+    local d=1/dist(dx,dy)/r
+    return dx*d,dy*d
 end
 function follow_target(self,b,speed)
     speed=speed or 1
     flx=flx or true
-    self.dx=b.x-self.x
-    self.dy=b.y-self.y
-    local d=idist(self.dx,self.dy)
-    self.dx*=d*speed
-    self.dy*=d*speed
+    self.dx,self.dy=eddist(b,self,1/speed)
 end
 
 -- Debug
